@@ -46,18 +46,13 @@ Your task:
 {format_instructions}
 `);
 
-const llm = new ChatGroq({
-  model: "meta-llama/llama-4-scout-17b-16e-instruct",
-  temperature: 0.7,
-  maxTokens: 600,
-  maxRetries: 3,
-});
-
-const chain = promptTemplate.pipe(llm).pipe(parser);
+// NOTE: Create the LLM and chain inside the request handler so we can
+// validate env keys at runtime and return actionable errors to the client.
 
 export async function POST(request: Request) {
   try {
     const body: InterviewRequest = await request.json();
+    console.log('[ai-model] request body:', body);
     const { jobTitle, jobDescription, interviewDuration, interviewType } = body;
 
     if (!jobTitle || !jobDescription || !interviewDuration || !interviewType) {
@@ -79,8 +74,61 @@ export async function POST(request: Request) {
       format_instructions: parser.getFormatInstructions(),
     };
 
+    // Validate API key and initialize LLM dynamically so we can provide
+    // actionable errors if the key looks like the wrong provider (eg. a
+    // Grok `xai-...` key placed into `GROQ_API_KEY`).
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (!groqApiKey) {
+      console.error('[ai-model] GROQ_API_KEY is missing');
+      return NextResponse.json(
+        {
+          isError: true,
+          error:
+            'GROQ_API_KEY is not set. Please set the correct Groq API key in the environment.',
+        },
+        { status: 500 }
+      );
+    }
+
+    if (groqApiKey.startsWith('xai-')) {
+      console.error('[ai-model] GROQ_API_KEY appears to be a Grok/X key (starts with xai-)');
+      return NextResponse.json(
+        {
+          isError: true,
+          error:
+            'Detected a Grok API key in GROQ_API_KEY (starts with "xai-"). Either set a valid Groq key in GROQ_API_KEY or switch the code to use Grok. See README or contact the maintainer.',
+        },
+        { status: 400 }
+      );
+    }
+
+    const llm = new ChatGroq({
+      apiKey: groqApiKey,
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      temperature: 0.7,
+      maxTokens: 600,
+      maxRetries: 3,
+    });
+
+    const chain = promptTemplate.pipe(llm).pipe(parser);
+
     // Run the chain
-    const result = await chain.invoke(input);
+    let result: any;
+    try {
+      result = await chain.invoke(input);
+    } catch (llmErr: any) {
+      console.error('LLM invocation error:', llmErr);
+      // If the LLM client returned an HTTP response, include status/message
+      const status = llmErr?.status || llmErr?.response?.status;
+      const msg = llmErr?.message || llmErr?.response?.data || String(llmErr);
+      return NextResponse.json(
+        {
+          isError: true,
+          error: `LLM request failed${status ? ` (status ${status})` : ''}: ${msg}`,
+        },
+        { status: 502 }
+      );
+    }
 
     // Fallback to extract inner object for UI
     const finalResult =
@@ -93,8 +141,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ data: finalResult });
   } catch (error: any) {
     console.error("❌ ERROR:", error);
+    // Return stack in development to aid debugging
     return NextResponse.json(
-      { isError: true, error: error.message || "Failed to generate questions" },
+      {
+        isError: true,
+        error: error.message || "Failed to generate questions",
+        stack: error.stack,
+      },
       { status: 500 }
     );
   }
