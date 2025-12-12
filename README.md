@@ -143,14 +143,9 @@ S3_BUCKET=vocalhire-audio
 S3_ACCESS_KEY=yourkey
 S3_SECRET_KEY=yoursecret
 ```
+5. Live Test
 
-Screenshots
------------
-<!-- Replace these placeholders with your real screenshots -->
-<p float="left">
-  <img src="assets/screenshot-1.png" width="48%" alt="Browse talent">
-  <img src="assets/screenshot-2.png" width="48%" alt="Profile & audition player">
-</p>
+Live test - https://www.vocalx.xyz/
 
 Accessibility & Performance tips
 --------------------------------
