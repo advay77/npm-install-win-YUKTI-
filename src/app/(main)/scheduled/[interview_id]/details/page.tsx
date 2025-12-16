@@ -192,9 +192,8 @@ export default function InterviewDetailsPage() {
 
   return (
     <div
-      className={`${
-        darkTheme ? "bg-gray-900 text-white" : "bg-gray-50 text-black"
-      } h-full p-4`}
+      className={`${darkTheme ? "bg-gray-900 text-white" : "bg-gray-50 text-black"
+        } h-full p-4`}
     >
       {/* INTERVIEW DETAILS */}
       {interview && (
@@ -228,10 +227,10 @@ export default function InterviewDetailsPage() {
                 <span className="font-semibold">Created At:</span>{" "}
                 {interview.created_at
                   ? new Date(interview.created_at).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
                   : ""}
               </p>
             </div>
@@ -263,7 +262,7 @@ export default function InterviewDetailsPage() {
         {!loading && (
           <>
             {interview?.["interview-details"] &&
-            interview["interview-details"].length > 0 ? (
+              interview["interview-details"].length > 0 ? (
               <div className="grid gap-4">
                 {interview?.["interview-details"]?.map((cand, idx) => {
                   // ⬇ put rating calculation INSIDE map()
@@ -286,7 +285,7 @@ export default function InterviewDetailsPage() {
                     <Card
                       key={idx}
                       className="p-3 border-none shadow"
-                      // onClick={() => setSelectedCandidate(cand)}
+                    // onClick={() => setSelectedCandidate(cand)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-6">
@@ -296,6 +295,7 @@ export default function InterviewDetailsPage() {
                             width={50}
                             height={50}
                             className="rounded-full"
+                            priority
                           />
                           <div>
                             <p className="font-semibold capitalize font-inter">
@@ -362,12 +362,11 @@ export default function InterviewDetailsPage() {
               </div>
 
               <div
-                className={`${
-                  selectedCandidate?.feedback?.data?.feedback
+                className={`${selectedCandidate?.feedback?.data?.feedback
                     ?.recommendation === "No"
                     ? "bg-red-500/30"
                     : "bg-green-500/30"
-                } w-fit p-2 rounded-md`}
+                  } w-fit p-2 rounded-md`}
               >
                 <p className="text-base font-inter font-medium text-black">
                   Recomended:{" "}
@@ -444,7 +443,7 @@ export default function InterviewDetailsPage() {
           )}
 
           {selectedCandidate?.feedback?.data?.feedback?.recommendation ===
-          "No" ? (
+            "No" ? (
             <div className="mt-5 bg-red-500/30 border border-red-600 rounded-md p-3">
               <div className="flex items-center justify-between">
                 <p className="tracking-tight text-sm font-inter">

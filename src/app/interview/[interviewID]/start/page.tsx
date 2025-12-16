@@ -476,6 +476,7 @@ Ensure the interview remains focused on React
           width={70}
           height={70}
           className="rounded-full w-[65px] h-[65 px] shrink-0"
+          priority
         />
       </div>
       <Separator className="my-2 max-w-[90%] bg-gray-300 mx-auto" />
@@ -520,6 +521,7 @@ Ensure the interview remains focused on React
                   width={70}
                   height={70}
                   className="rounded-full w-[200px] h-[200px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                  priority
                 />
                 <p className="absolute top-[70%] left-1/2 -translate-x-1/2 font-inter capitalize text-lg font-semibold">{interviewInfo?.userName} </p>
 
@@ -615,8 +617,8 @@ Ensure the interview remains focused on React
                 >
                   <div
                     className={`max-w-[70%] px-4 py-2 rounded-2xl text-xs tracking-tight font-inter shadow-sm ${msg.type === "assistant"
-                        ? "bg-white text-foreground rounded-bl-none"
-                        : "bg-primary text-primary-foreground rounded-br-none"
+                      ? "bg-white text-foreground rounded-bl-none"
+                      : "bg-primary text-primary-foreground rounded-br-none"
                       }`}
                   >
                     {msg.content}

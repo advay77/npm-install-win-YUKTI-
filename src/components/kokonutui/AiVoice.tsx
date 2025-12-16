@@ -84,9 +84,9 @@ export default function AI_Voice() {
               style={
                 submitted && isClient
                   ? {
-                      height: `${20 + Math.random() * 80}%`,
-                      animationDelay: `${i * 0.05}s`,
-                    }
+                    height: `${20 + ((i % 10) * 8)}%`,
+                    animationDelay: `${i * 0.05}s`,
+                  }
                   : undefined
               }
             />
