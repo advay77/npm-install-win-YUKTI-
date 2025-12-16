@@ -120,27 +120,35 @@ Thanks.`
             return (
               <Card
                 key={item.interview_id}
-                className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 p-6 w-full max-w-md"
+                className="relative bg-white/90 backdrop-blur border border-slate-200/80 rounded-2xl shadow-[0_10px_40px_-24px_rgba(0,0,0,0.35)] hover:shadow-[0_14px_50px_-22px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 p-6 w-full max-w-md flex flex-col gap-4"
               >
-                <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
-                  <div className="p-3 rounded-xl bg-blue-50 text-blue-600 shadow-inner">
+                <CardHeader className="flex flex-row items-start justify-start gap-3 pb-0">
+                  <div className="p-3 rounded-xl bg-blue-50 text-blue-600 shadow-inner shrink-0">
                     <Icon className="w-5 h-5" />
                   </div>
-                  <CardTitle className="font-semibold text-xl text-slate-900 font-sora text-right">
-                    {item.jobTitle}
-                  </CardTitle>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs uppercase tracking-[0.08em] text-slate-500 font-semibold">Role</p>
+                    <CardTitle className="font-semibold text-xl text-slate-900 font-sora leading-tight">
+                      {item.jobTitle}
+                    </CardTitle>
+                  </div>
                 </CardHeader>
 
-                <CardContent className="text-sm text-slate-600 font-inter space-y-4">
-                  <p className="line-clamp-3 text-left leading-relaxed">{item.jobDescription}</p>
+                <CardContent className="text-sm text-slate-600 font-inter space-y-4 pt-2">
+                  <p className="line-clamp-3 text-left leading-relaxed text-slate-700">
+                    {item.jobDescription}
+                  </p>
                   <div className="flex items-center gap-3 text-sm text-slate-700">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium">
-                      ⏱ {item.interviewDuration} mins
+                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium">
+                      ⏱
+                      <span className="text-slate-800">{item.interviewDuration} mins</span>
                     </span>
                   </div>
                 </CardContent>
 
-                <CardFooter className="flex justify-center gap-4 pt-4">
+                <div className="h-px bg-slate-100" />
+
+                <CardFooter className="flex justify-between gap-4 pt-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -167,16 +175,6 @@ Thanks.`
           })}
         </div>
       )}
-
-      {/* <div
-        className={`grid ${
-          view === "grid" ? "grid-cols-3" : "grid-cols-1"
-        } border-dashed border - blue - 600 p - 4 rounded - md bg - white`}
-      >
-        <div className="flex w-full h-full items-center justify-center">
-          hello
-        </div>
-      </div> */}
     </div>
   );
 };
