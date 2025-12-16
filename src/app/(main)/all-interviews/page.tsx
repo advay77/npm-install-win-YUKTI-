@@ -12,7 +12,7 @@ import {
 import { useTheme } from "@/context/ThemeProvider";
 import { useUserData } from "@/context/UserDetailContext";
 import { supabase } from "@/services/supabaseClient";
-import { Archive, Copy } from "lucide-react";
+import { Archive, Copy, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -47,6 +47,23 @@ const AllInterview = () => {
       .eq("userEmail", users?.[0].email);
 
     setInterviewList(data);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("interviews")
+        .delete()
+        .eq("interview_id", id);
+
+      if (error) throw error;
+
+      setInterviewList((prev: any[]) => prev?.filter((i) => i.interview_id !== id));
+      toast.success("Interview deleted");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete interview");
+    }
   };
 
   return (
@@ -151,10 +168,9 @@ const AllInterview = () => {
                       <Button
                         size="sm"
                         variant="destructive"
-                        className=""
-                        onClick={() => { }}
+                        onClick={() => handleDelete(item.interview_id)}
                       >
-                        Archive <Archive className="ml-2 w-4 h-4" />
+                        Delete <Trash2 className="ml-2 w-4 h-4" />
                       </Button>
                     </CardFooter>
                   </Card>
@@ -219,9 +235,9 @@ const AllInterview = () => {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => { }}
+                          onClick={() => handleDelete(item.interview_id)}
                         >
-                          Archive <Archive className="ml-2 w-4 h-4" />
+                          Delete <Trash2 className="ml-2 w-4 h-4" />
                         </Button>
                       </div>
                     </div>
