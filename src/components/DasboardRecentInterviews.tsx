@@ -50,7 +50,7 @@ const DasboardRecentInterviews = () => {
         .order("created_at", { ascending: false })
         .limit(3);
 
-      // console.log("interview data raw", data);
+      if (error) throw error;
       setInterviewList(data);
     } catch (err) {
       console.log(err);
@@ -59,8 +59,22 @@ const DasboardRecentInterviews = () => {
     }
   };
 
+  const handleSend = (item: any) => {
+    const url = `${window.location.origin}/interview/${item.interview_id}`;
+    const subject = encodeURIComponent(`Interview link for ${item.jobTitle ?? "your role"}`);
+    const body = encodeURIComponent(
+      `Hi,
+
+Here is your interview link: ${url}
+Duration: ${item.interviewDuration ?? ""} mins.
+
+Thanks.`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
   return (
-    <div className="my-10">
+    <div className="my-10 px-4 sm:px-6 lg:px-10">
       <div className=" flex items-center justify-between">
         <h2 className="font-semibold text-xl font-inter capitalize ml-5" style={{ fontSize: "37px", textDecoration: "underline" }}>
           Recent Interviews
@@ -98,8 +112,7 @@ const DasboardRecentInterviews = () => {
 
       {interviewList && !loading && (
         <div
-          className={`grid ${view === "grid" ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-1"
-            } gap-4 mt-10`}
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mt-10 justify-items-center"
         >
           {interviewList?.map((item: any, index: number) => {
             const Icon = icons[index % icons.length]; // pick icon by index
@@ -107,26 +120,27 @@ const DasboardRecentInterviews = () => {
             return (
               <Card
                 key={item.interview_id}
-                className="bg-white border rounded-lg shadow-sm hover:shadow-md transition p-4"
+                className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 p-6 w-full max-w-md"
               >
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div className="p-2 rounded-md bg-gray-100">
-                    <Icon className="w-5 h-5 text-blue-500" />
+                <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+                  <div className="p-3 rounded-xl bg-blue-50 text-blue-600 shadow-inner">
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <CardTitle className="font-semibold text-lg text-black font-sora">
+                  <CardTitle className="font-semibold text-xl text-slate-900 font-sora text-right">
                     {item.jobTitle}
                   </CardTitle>
                 </CardHeader>
 
-                <CardContent className="text-sm text-muted-foreground text-center font-inter space-y-2">
-                  <p className="line-clamp-2">{item.jobDescription}</p>
-                  <div className="flex items-center justify-start text-base mt-4 text-gray-500">
-                    <span>⏱ {item.interviewDuration} mins</span>
-                    {/* <span>📌 {item.interviewType}</span> */}
+                <CardContent className="text-sm text-slate-600 font-inter space-y-4">
+                  <p className="line-clamp-3 text-left leading-relaxed">{item.jobDescription}</p>
+                  <div className="flex items-center gap-3 text-sm text-slate-700">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium">
+                      ⏱ {item.interviewDuration} mins
+                    </span>
                   </div>
                 </CardContent>
 
-                <CardFooter className="flex justify-center gap-6 pt-3">
+                <CardFooter className="flex justify-center gap-4 pt-4">
                   <Button
                     variant="outline"
                     size="sm"
@@ -135,15 +149,15 @@ const DasboardRecentInterviews = () => {
                       navigator.clipboard.writeText(url);
                       toast.success("Link copied to clipboard");
                     }}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 flex items-center"
                   >
                     Copy Link <Copy className="ml-2 w-4 h-4" />
                   </Button>
 
                   <Button
                     size="sm"
-                    className=" bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => { }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+                    onClick={() => handleSend(item)}
                   >
                     Send <Send className="ml-2 w-4 h-4" />
                   </Button>
@@ -157,7 +171,7 @@ const DasboardRecentInterviews = () => {
       {/* <div
         className={`grid ${
           view === "grid" ? "grid-cols-3" : "grid-cols-1"
-        } border-dashed border-blue-600 p-4 rounded-md bg-white`}
+        } border-dashed border - blue - 600 p - 4 rounded - md bg - white`}
       >
         <div className="flex w-full h-full items-center justify-center">
           hello
