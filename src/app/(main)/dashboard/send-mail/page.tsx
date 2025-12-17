@@ -43,23 +43,25 @@ export default function SendMailPage() {
                             </div>
                         </div>
                     </div>
-                    <p className="text-sm text-slate-600 mt-2 max-w-2xl font-inter leading-relaxed ml-12">
+                    <p className={`text-sm mt-2 max-w-2xl font-inter leading-relaxed ml-12 ${darkTheme ? "text-slate-300" : "text-slate-600"}`}>
                         Reach out with feedback, next steps, or scheduling updates. Your mail will be sent using the configured sender credentials.
                     </p>
                 </div>
 
                 {/* Form Card */}
-                <div className={`${darkTheme ? "bg-slate-800 border border-slate-700" : "bg-white"} shadow-2xl rounded-2xl p-6 border border-gray-100/50 relative overflow-hidden group hover:shadow-3xl transition-all duration-300`}>
+                <div className={`${darkTheme
+                    ? "bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+                    : "bg-white border border-gray-100/60 shadow-2xl"} rounded-2xl p-6 relative overflow-hidden group hover:shadow-3xl transition-all duration-300`}>
                     {/* Decorative gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500/6 to-blue-500/6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
                     {/* Decorative top line */}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500"></div>
 
                     <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
-                            <Mail className="h-4 w-4 text-pink-600" />
-                            <h2 className="text-lg font-bold font-sora text-slate-800">Compose Message</h2>
+                        <div className={`flex items-center gap-2 mb-4 pb-3 border-b ${darkTheme ? "border-slate-700" : "border-gray-200"}`}>
+                            <Mail className={`h-4 w-4 ${darkTheme ? "text-pink-300" : "text-pink-600"}`} />
+                            <h2 className={`text-lg font-bold font-sora ${darkTheme ? "text-white" : "text-slate-800"}`}>Compose Message</h2>
                         </div>
                         <SendMailForm defaultSubject="Interview feedback and next steps" />
                     </div>

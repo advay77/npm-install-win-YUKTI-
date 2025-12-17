@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useTheme } from "@/context/ThemeProvider";
 
 interface SendMailFormProps {
     defaultEmail?: string;
@@ -21,6 +22,7 @@ const SendMailForm = ({
     defaultBody = "",
     onSuccess,
 }: SendMailFormProps) => {
+    const { darkTheme } = useTheme();
     const [to, setTo] = useState(defaultEmail);
     const [subject, setSubject] = useState(defaultSubject);
     const [body, setBody] = useState(defaultBody);
@@ -67,8 +69,8 @@ const SendMailForm = ({
     return (
         <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
-                <Label htmlFor="to" className="text-sm font-semibold font-inter flex items-center gap-2">
-                    <UserCheck className="h-4 w-4 text-blue-600" />
+                <Label htmlFor="to" className={`text-sm font-semibold font-inter flex items-center gap-2 ${darkTheme ? "text-slate-200" : "text-slate-800"}`}>
+                    <UserCheck className={`h-4 w-4 ${darkTheme ? "text-blue-300" : "text-blue-600"}`} />
                     Recipient email
                 </Label>
                 <Input
@@ -78,13 +80,16 @@ const SendMailForm = ({
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
                     required
-                    className="h-10 font-inter border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className={`h-10 font-inter transition-all ${darkTheme
+                        ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        : "border-gray-300 text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        }`}
                 />
             </div>
 
             <div className="space-y-1.5">
-                <Label htmlFor="subject" className="text-sm font-semibold font-inter flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-purple-600" />
+                <Label htmlFor="subject" className={`text-sm font-semibold font-inter flex items-center gap-2 ${darkTheme ? "text-slate-200" : "text-slate-800"}`}>
+                    <Mail className={`h-4 w-4 ${darkTheme ? "text-purple-300" : "text-purple-600"}`} />
                     Subject
                 </Label>
                 <Input
@@ -93,13 +98,16 @@ const SendMailForm = ({
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     required
-                    className="h-10 font-inter border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className={`h-10 font-inter transition-all ${darkTheme
+                        ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        : "border-gray-300 text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        }`}
                 />
             </div>
 
             <div className="space-y-1.5">
-                <Label htmlFor="body" className="text-sm font-semibold font-inter flex items-center gap-2">
-                    <Send className="h-4 w-4 text-pink-600" />
+                <Label htmlFor="body" className={`text-sm font-semibold font-inter flex items-center gap-2 ${darkTheme ? "text-slate-200" : "text-slate-800"}`}>
+                    <Send className={`h-4 w-4 ${darkTheme ? "text-pink-300" : "text-pink-600"}`} />
                     Message
                 </Label>
                 <Textarea
@@ -109,11 +117,16 @@ const SendMailForm = ({
                     onChange={(e) => setBody(e.target.value)}
                     rows={5}
                     required
-                    className="resize-none font-inter border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    className={`resize-none font-inter transition-all ${darkTheme
+                        ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        : "border-gray-300 text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        }`}
                 />
-                <div className="flex items-start gap-2 mt-1.5 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex-shrink-0 w-1 h-1 bg-blue-500 rounded-full mt-1.5"></div>
-                    <p className="text-xs text-blue-700 font-medium font-inter">
+                <div className={`flex items-start gap-2 mt-1.5 p-2 rounded-lg border ${darkTheme
+                    ? "bg-slate-800/70 border-slate-700 text-slate-200"
+                    : "bg-blue-50 border-blue-200 text-blue-700"}`}>
+                    <div className={`flex-shrink-0 w-1 h-1 rounded-full mt-1.5 ${darkTheme ? "bg-blue-400" : "bg-blue-500"}`}></div>
+                    <p className={`text-xs font-medium font-inter ${darkTheme ? "text-slate-200" : "text-blue-700"}`}>
                         <span className="font-bold">Tip:</span> Keep it concise and include next steps or timelines.
                     </p>
                 </div>
@@ -121,7 +134,11 @@ const SendMailForm = ({
 
             <Button
                 type="submit"
-                className="w-full h-11 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold font-inter rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+                className={`w-full h-11 flex items-center justify-center gap-2 font-semibold font-inter rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] ${canSend
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                    : darkTheme
+                        ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                        : "bg-slate-200 text-slate-500 cursor-not-allowed"}`}
                 disabled={!canSend}
             >
                 {sending ? (

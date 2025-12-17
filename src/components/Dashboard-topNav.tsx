@@ -96,13 +96,18 @@ const DashboardTopNav = () => {
               className={clsx(
                 "w-72 mr-5 font-inter text-[15px] space-y-1 rounded-none p-3 shadow-xl border",
                 darkTheme
-                  ? "bg-slate-900/95 text-white border-slate-700"
-                  : "bg-white/95 text-slate-900 border-blue-100"
+                  ? "bg-[#0c1024] text-white border-slate-800/80 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+                  : "bg-white text-slate-900 border-blue-100"
               )}
               align="start"
             >
               <DropdownMenuLabel
-                className="font-sora italic font-bold text-center tracking-[0.08em] py-3 rounded-none bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white uppercase"
+                className={clsx(
+                  "font-sora italic font-bold text-center tracking-[0.08em] w-full py-3 rounded-none uppercase",
+                  darkTheme
+                    ? "bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-700 text-white shadow-sm"
+                    : "bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white"
+                )}
               >
                 HEY, {users?.[0].name}
               </DropdownMenuLabel>
@@ -110,7 +115,9 @@ const DashboardTopNav = () => {
               <DropdownMenuItem
                 className={clsx(
                   "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all",
-                  darkTheme ? "hover:bg-slate-800" : "hover:bg-blue-50"
+                  darkTheme
+                    ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
+                    : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
                 )}
               >
                 <LuUser className="text-blue-600" /> Profile
@@ -119,7 +126,9 @@ const DashboardTopNav = () => {
                 onClick={toggleTheme}
                 className={clsx(
                   "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all",
-                  darkTheme ? "hover:bg-slate-800" : "hover:bg-blue-50"
+                  darkTheme
+                    ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
+                    : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
                 )}
               >
                 <LuSun className="text-yellow-500" /> Theme
@@ -127,7 +136,9 @@ const DashboardTopNav = () => {
               <DropdownMenuItem
                 className={clsx(
                   "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all",
-                  darkTheme ? "hover:bg-slate-800" : "hover:bg-blue-50"
+                  darkTheme
+                    ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
+                    : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
                 )}
               >
                 <LuWallet className="text-purple-600" /> Subscription

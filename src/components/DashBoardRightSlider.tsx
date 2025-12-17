@@ -107,7 +107,9 @@ export function SheetDemo() {
         ? "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950"
         : "bg-white"} py-8 px-5 border-l ${darkTheme
           ? "border-slate-700/50 shadow-2xl shadow-slate-900/50"
-          : "border-transparent shadow-none"}`}>
+          : "border-transparent shadow-none"} ${darkTheme
+            ? "[&>button]:text-slate-200 [&>button]:hover:text-white"
+            : "[&>button]:text-slate-500 [&>button]:hover:text-slate-700"}`}>
         <SheetHeader>
           <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700`} />
           <SheetTitle className={`font-extrabold text-2xl font-sora tracking-tight flex gap-3 items-center ${darkTheme ? "text-white" : "text-slate-900"}`}>
