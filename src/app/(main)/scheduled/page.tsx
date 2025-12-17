@@ -73,42 +73,56 @@ const ScheduledInterview = () => {
   }
   return (
     <div
-      className={`w-full h-full p-6 ${!darkTheme
-          ? "bg-gradient-to-br from-blue-50 to-gray-100"
-          : "bg-gray-200"
+      className={`w-full min-h-screen p-6 ${!darkTheme
+        ? "bg-gradient-to-br from-blue-50 via-purple-50/30 to-pink-50/20"
+        : "bg-slate-900"
         } relative`}
     >
-      <div className="">
+      <div>
+        {/* Welcome card */}
         <div
-          className={`${darkTheme ? "bg-slate-800 text-white" : "bg-white text-black"
-            } rounded-md flex items-center justify-between relative h-auto max-w-[620px] mx-auto shadow`}
+          className={`${darkTheme ? "bg-slate-800 text-white" : "bg-white text-black"}
+            rounded-2xl flex items-center justify-between relative max-w-[900px] mx-auto shadow-xl hover:shadow-2xl transition-all border border-blue-100/30 overflow-hidden`}
         >
-          <div className=" flex flex-col justify-evenly h-full py-3 px-4">
-            <h1 className="font-semibold text-2xl tracking-tight capitalize font-sora mb-3">
+          {/* Decorative gradient line */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+
+          {/* Subtle overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
+
+          <div className="relative z-10 flex flex-col justify-evenly h-full py-6 px-6">
+            <h1 className="font-bold text-3xl tracking-tight capitalize font-sora mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
               Welcome {users?.[0].name}
             </h1>
-            <p className="font-inter text-base font-medium max-w-[400px]">
-              Welcome to your Scheduled interview pannel.check all the deatil of
-              candidates and their given interviews.
+            <p className="font-inter text-sm md:text-base font-medium max-w-[520px] text-slate-600 dark:text-slate-300 leading-relaxed">
+              Track and manage all your scheduled interviews. Review candidates and open interview details in one place.
             </p>
-            <Button className="py-1 text-sm tracking-tight font-inter w-fit mt-5 bg-blue-500 text-white">
-              View{" "}
+            <Button className="py-2 px-4 text-sm tracking-tight font-inter font-semibold w-fit mt-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all">
+              View
             </Button>
           </div>
-          <Image
-            src="/partnership.png"
-            width={180}
-            height={180}
-            alt="welcome"
-            className="object-cover"
-          />
+          <div className="relative mr-4">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-2xl rounded-full" />
+            <Image
+              src="/partnership.png"
+              width={220}
+              height={220}
+              alt="welcome"
+              className="object-cover relative z-10 drop-shadow-2xl"
+            />
+          </div>
         </div>
-        <div className=" flex items-center justify-between mt-5">
-          <h2 className="font-semibold text-2xl font-inter capitalize ml-5">
-            Scheduled Interviews
-          </h2>
-          <div className="flex items-center gap-5 mr-10">
-            <div className="space-x-2 bg-white p-2 rounded-md flex">
+
+        {/* Header & view toggle */}
+        <div className="flex items-center justify-between mt-8 max-w-[1100px] mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-pink-500 rounded-full"></div>
+            <h2 className="font-bold text-2xl md:text-3xl font-sora tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Scheduled Interviews
+            </h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className={`${darkTheme ? "bg-slate-800 border border-slate-700" : "bg-white"} p-2 rounded-xl shadow-md flex`}>
               <Button
                 variant={view === "grid" ? "default" : "ghost"}
                 size="icon"
@@ -117,7 +131,6 @@ const ScheduledInterview = () => {
               >
                 <Grid2X2 className="w-4 h-4" />
               </Button>
-
               <Button
                 variant={view === "list" ? "default" : "ghost"}
                 size="icon"
@@ -143,8 +156,7 @@ const ScheduledInterview = () => {
 
         {interviewList && (
           <div
-            className={`grid ${view === "grid" ? "grid-cols-3" : "grid-cols-1"
-              } gap-4 mt-10`}
+            className={`grid ${view === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} gap-6 mt-10 max-w-[1100px] mx-auto`}
           >
             {interviewList?.map((item: any, index: number) => {
               const Icon = icons[index % icons.length]; // pick icon by index
@@ -152,32 +164,43 @@ const ScheduledInterview = () => {
               return (
                 <Card
                   key={item.interview_id}
-                  className="bg-white border rounded-lg shadow-sm hover:shadow-md transition px-3 py-4"
+                  className={`${darkTheme ? "bg-slate-800 border border-slate-700" : "bg-white"} rounded-2xl shadow-md hover:shadow-lg transition-all px-4 py-5 relative overflow-hidden group`}
                 >
+                  {/* overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {/* top line */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <div className="p-2 rounded-full bg-blue-500 animate-pulse"></div>
-                    <CardTitle className="font-medium text-lg text-black font-sora">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                      <Icon className="text-white w-5 h-5" />
+                    </div>
+                    <CardTitle className="font-semibold text-lg font-sora">
                       {item.jobTitle}
                     </CardTitle>
                   </CardHeader>
 
-                  <CardContent className="text-sm text-muted-foreground text-center font-inter space-y-2">
-                    <p className="line-clamp-2">{item.jobDescription}</p>
+                  <CardContent className="text-sm font-inter space-y-3">
+                    <p className="line-clamp-2 text-slate-600 dark:text-slate-300">
+                      {item.jobDescription}
+                    </p>
 
-                    <div className="flex items-center gap-4 justify-end my-1">
-                      <div className="rounded-full bg-green-500 w-3 h-3 "></div>
-                      <p>Candidates {item["interview-details"].length}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex w-2 h-2 rounded-full bg-green-500" />
+                        <span className="text-xs text-slate-600 dark:text-slate-300">Active</span>
+                      </div>
+                      <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-slate-700 dark:text-slate-200">
+                        Candidates: {item["interview-details"].length}
+                      </div>
                     </div>
                   </CardContent>
 
-                  <CardFooter className="flex justify-center gap-6">
+                  <CardFooter className="flex justify-end">
                     <Link href={`/scheduled/${item.interview_id}/details`}>
-                      <Button
-                        className="font-inter text-sm cursor-pointer"
-                        variant="outline"
-                      >
+                      <Button className="font-inter text-sm cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all">
                         View Details <LuActivity />
-                      </Button>{" "}
+                      </Button>
                     </Link>
                   </CardFooter>
                 </Card>

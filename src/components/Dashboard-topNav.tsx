@@ -121,9 +121,9 @@ const DashboardTopNav = () => {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleSignOut}
-                className="mt-1 flex items-center justify-center gap-3 rounded-none cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02]"
+                className="mt-1 flex items-center justify-center gap-3 rounded-none cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-700 text-white hover:text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] focus:text-white"
               >
-                <LuLogOut className="text-white" /> Logout
+                <LuLogOut className="text-white hover:text-white" /> Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
