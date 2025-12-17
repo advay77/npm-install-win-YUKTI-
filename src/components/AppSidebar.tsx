@@ -20,7 +20,7 @@ import {
   LuBoxes,
   LuWalletCards,
   LuSettings,
-  LuChevronsDownUp,
+  LuClock,
 } from "react-icons/lu";
 import { useTheme } from "@/context/ThemeProvider";
 import clsx from "clsx";
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/popover";
 import { Progress } from "./ui/progress";
 import Link from "next/link";
+import { toast } from "sonner";
 
 // Menu items.
 const items = [
@@ -255,14 +256,36 @@ export function AppSidebar() {
               {users?.[0].email}
             </p>
           </div>
-          <Popover>
-            <PopoverTrigger className="hover:bg-white/15 rounded-xl p-1.5 transition-all duration-200 hover:scale-110">
-              <LuChevronsDownUp className="text-lg text-white cursor-pointer" />
-            </PopoverTrigger>
-            <PopoverContent className="w-44">
-              <div></div>
-            </PopoverContent>
-          </Popover>
+          <button
+            onClick={() => {
+              const now = new Date();
+              const options: Intl.DateTimeFormatOptions = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              };
+              const formatted = now.toLocaleString('en-US', options);
+              toast.info(formatted, {
+                duration: 4000,
+                style: {
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: '#fff',
+                  fontWeight: '500',
+                  fontSize: '14px',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
+                },
+              });
+            }}
+            className="hover:bg-white/15 rounded-xl p-1.5 transition-all duration-200 hover:scale-110"
+          >
+            <LuClock className="text-lg text-white cursor-pointer" />
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>
