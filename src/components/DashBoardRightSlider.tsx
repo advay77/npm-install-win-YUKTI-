@@ -81,64 +81,83 @@ export function SheetDemo() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-all fixed bottom-10 right-10 group ${darkTheme
-          ? "bg-gradient-to-br from-blue-600 to-blue-700 shadow-xl shadow-blue-600/30"
-          : "bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg"
+        <div className={`w-14 h-14 rounded-full flex items-center justify-center cursor-pointer hover:scale-106 transition-all fixed bottom-7 right-12 group shadow-1xl ${darkTheme
+          ? "bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 shadow-xl shadow-blue-600/40 hover:shadow-blue-600/50"
+          : "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 shadow-lg shadow-blue-500/40 hover:shadow-blue-500/50"
           }`}>
-          <Stars className={`text-2xl transition-all ${darkTheme ? "text-white" : "text-white"}`} />
+          <Stars className="text-3xl text-white animate-pulse group-hover:animate-bounce" />
         </div>
       </SheetTrigger>
-      <SheetContent className={`${darkTheme ? "bg-slate-900" : "bg-white"} py-6 px-4 border-l ${darkTheme ? "border-slate-700" : "border-blue-100"}`}>
+      <SheetContent className={`${darkTheme ? "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950" : "bg-gradient-to-b from-white via-blue-50/30 to-white"} py-8 px-5 border-l ${darkTheme ? "border-slate-700/50 shadow-2xl shadow-slate-900/50" : "border-blue-100/50 shadow-xl"}`}>
         <SheetHeader>
-          <SheetTitle className={`font-extrabold text-xl font-sora tracking-tight flex gap-3 ${darkTheme ? "text-white" : "text-slate-900"}`}>
-            INTERVIEWX AI <Stars className={darkTheme ? "text-blue-400" : "text-blue-600"} />
+          <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700`} />
+          <SheetTitle className={`font-extrabold text-2xl font-sora tracking-tight flex gap-3 items-center ${darkTheme ? "text-white" : "text-slate-900"}`}>
+            <span>INTERVIEWX AI</span>
+            <Stars className={`text-2xl ${darkTheme ? "text-blue-400 animate-spin" : "text-blue-600 animate-bounce"}`} />
           </SheetTitle>
-          <SheetDescription className={`text-sm font-inter tracking-wide mt-3 px-0 leading-relaxed ${darkTheme ? "text-slate-400" : "text-slate-600"}`}>
-            I&apos;m an AI agent that can help you with getting started with INTERVIEWX, sending mails to candidates, and solving queries.
+          <SheetDescription className={`text-sm font-inter tracking-wide mt-4 px-0 leading-relaxed ${darkTheme ? "text-slate-400" : "text-slate-600"}`}>
+            Your intelligent assistant for interview management, candidate communication, and workflow optimization.
           </SheetDescription>
         </SheetHeader>
         {/*---------------- AI MESSAGES DIPLAY--------------------- */}
-        <div className="h-full flex flex-col mt-6">
+        <div className="h-full flex flex-col mt-8">
           {messages.length == 0 ? (
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <div className={`p-3 rounded-lg border-2 font-sora text-xs tracking-tight text-center hover:scale-105 transition-all duration-200 cursor-pointer font-medium ${darkTheme
-                ? "bg-blue-600/20 border-blue-500 text-blue-200 hover:bg-blue-600/30 hover:border-blue-400"
-                : "bg-blue-100 border-blue-400 text-blue-700 hover:bg-blue-200 hover:border-blue-500"
-                }`}>
-                <p>Getting started with creating interviews</p>
-              </div>
-              <div className={`p-3 rounded-lg border-2 font-sora text-xs tracking-tight text-center hover:scale-105 transition-all duration-200 cursor-pointer font-medium ${darkTheme
-                ? "bg-blue-600/20 border-blue-500 text-blue-200 hover:bg-blue-600/30 hover:border-blue-400"
-                : "bg-blue-100 border-blue-400 text-blue-700 hover:bg-blue-200 hover:border-blue-500"
-                }`}>
-                <p>Get To know more about INTERVIEWX</p>
-              </div>
-              <div className={`p-3 rounded-lg border-2 font-sora text-xs tracking-tight text-center hover:scale-105 transition-all duration-200 cursor-pointer font-medium ${darkTheme
-                ? "bg-blue-600/20 border-blue-500 text-blue-200 hover:bg-blue-600/30 hover:border-blue-400"
-                : "bg-blue-100 border-blue-400 text-blue-700 hover:bg-blue-200 hover:border-blue-500"
-                }`}>
-                <p>Creating Tickets to solve complex quiries</p>
-              </div>
-              <div className={`p-3 rounded-lg border-2 font-sora text-xs tracking-tight text-center hover:scale-105 transition-all duration-200 cursor-pointer font-medium ${darkTheme
-                ? "bg-blue-600/20 border-blue-500 text-blue-200 hover:bg-blue-600/30 hover:border-blue-400"
-                : "bg-blue-100 border-blue-400 text-blue-700 hover:bg-blue-200 hover:border-blue-500"
-                }`}>
-                <p>Send Mail To candidates</p>
+            <div className="space-y-2">
+              <h3 className={`text-sm font-semibold tracking-tight mb-4 ${darkTheme ? "text-slate-300" : "text-slate-700"}`}>Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button className={`p-4 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                  ? "bg-gradient-to-br from-blue-600/30 to-blue-600/10 border-blue-500/50 text-blue-200 hover:from-blue-600/40 hover:to-blue-600/20 hover:border-blue-400"
+                  : "bg-gradient-to-br from-blue-100 to-blue-50 border-blue-400 text-blue-700 hover:from-blue-200 hover:to-blue-100 hover:border-blue-500"
+                  }`}>
+                  <div className="flex items-center justify-center gap-1 h-full flex-col">
+                    <span>📹</span>
+                    <p>Create Interviews</p>
+                  </div>
+                </button>
+                <button className={`p-4 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                  ? "bg-gradient-to-br from-purple-600/30 to-purple-600/10 border-purple-500/50 text-purple-200 hover:from-purple-600/40 hover:to-purple-600/20 hover:border-purple-400"
+                  : "bg-gradient-to-br from-purple-100 to-purple-50 border-purple-400 text-purple-700 hover:from-purple-200 hover:to-purple-100 hover:border-purple-500"
+                  }`}>
+                  <div className="flex items-center justify-center gap-1 h-full flex-col">
+                    <span>📚</span>
+                    <p>About INTERVIEWX</p>
+                  </div>
+                </button>
+                <button className={`p-4 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                  ? "bg-gradient-to-br from-pink-600/30 to-pink-600/10 border-pink-500/50 text-pink-200 hover:from-pink-600/40 hover:to-pink-600/20 hover:border-pink-400"
+                  : "bg-gradient-to-br from-pink-100 to-pink-50 border-pink-400 text-pink-700 hover:from-pink-200 hover:to-pink-100 hover:border-pink-500"
+                  }`}>
+                  <div className="flex items-center justify-center gap-1 h-full flex-col">
+                    <span>🎫</span>
+                    <p>Create Tickets</p>
+                  </div>
+                </button>
+                <button className={`p-4 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                  ? "bg-gradient-to-br from-emerald-600/30 to-emerald-600/10 border-emerald-500/50 text-emerald-200 hover:from-emerald-600/40 hover:to-emerald-600/20 hover:border-emerald-400"
+                  : "bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-400 text-emerald-700 hover:from-emerald-200 hover:to-emerald-100 hover:border-emerald-500"
+                  }`}>
+                  <div className="flex items-center justify-center gap-1 h-full flex-col">
+                    <span>✉️</span>
+                    <p>Send Mails</p>
+                  </div>
+                </button>
               </div>
             </div>
           ) : (
-            <ScrollArea className={`h-[52vh] px-4 py-3 rounded-lg ${darkTheme ? "bg-slate-800/40" : "bg-blue-50/40"}`}>
-              <div className="flex flex-col gap-4">
+            <ScrollArea className={`h-[52vh] px-3 py-4 rounded-xl border ${darkTheme
+              ? "bg-slate-800/30 border-slate-700/50"
+              : "bg-blue-50/40 border-blue-100/50"}`}>
+              <div className="flex flex-col gap-4 pr-4">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`max-w-[75%] px-4 py-3 rounded-lg text-sm font-inter font-medium shadow-sm ${msg.role === "user"
+                    className={`max-w-[75%] px-4 py-3 rounded-xl text-sm font-inter font-medium shadow-md backdrop-blur-sm ${msg.role === "user"
                       ? darkTheme
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white self-end shadow-md"
-                        : "bg-gradient-to-r from-blue-600 to-blue-700 text-white self-end shadow-md"
+                        ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white self-end shadow-lg"
+                        : "bg-gradient-to-br from-blue-600 to-blue-700 text-white self-end shadow-lg"
                       : darkTheme
-                        ? "bg-slate-700 text-slate-100 self-start"
-                        : "bg-slate-200 text-slate-900 self-start"
+                        ? "bg-slate-700/80 text-slate-50 self-start border border-slate-600/50"
+                        : "bg-slate-200/80 text-slate-900 self-start border border-slate-300/50"
                       }`}
                   >
                     <ReactMarkdown>{msg.text}</ReactMarkdown>
@@ -146,9 +165,9 @@ export function SheetDemo() {
                 ))}
 
                 {aiLoading && (
-                  <div className={`flex items-center gap-2 self-start px-3 py-2 ${darkTheme ? "text-slate-400" : "text-slate-600"}`}>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-xs font-medium">Thinking…</span>
+                  <div className={`flex items-center gap-2 self-start px-4 py-3 rounded-xl ${darkTheme ? "bg-slate-700/50 text-slate-300" : "bg-slate-200/50 text-slate-700"}`}>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-xs font-semibold">AI is thinking…</span>
                   </div>
                 )}
 
@@ -159,32 +178,33 @@ export function SheetDemo() {
         </div>
 
         {/* TEXTAREA TO SEND ------------ */}
-        <SheetFooter className="shrink-0 mt-6">
+        <SheetFooter className="shrink-0 mt-8 pt-4 border-t" style={{ borderTopColor: darkTheme ? "rgba(51, 65, 85, 0.3)" : "rgba(191, 219, 254, 0.3)" }}>
           <div className="w-full">
-            <Label className={`font-inter text-sm tracking-tight font-semibold ${darkTheme ? "text-white" : "text-slate-900"}`}>
-              Send a message
+            <Label className={`font-inter text-sm tracking-tight font-semibold mb-3 block ${darkTheme ? "text-slate-200" : "text-slate-800"}`}>
+              Send a Message
             </Label>
-            <div className="relative mt-3">
+            <div className="relative">
               <Textarea
-                placeholder="Write a message"
+                placeholder="Ask me anything..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className={`font-inter text-sm tracking-tight font-medium h-28 resize-none rounded-lg border-2 transition-all ${darkTheme
-                  ? "bg-slate-800 text-white placeholder-slate-500 border-slate-700 focus:border-blue-500 focus:ring-blue-500/20"
-                  : "bg-white text-slate-900 placeholder-slate-400 border-blue-200 focus:border-blue-500 focus:ring-blue-500/10"
+                className={`font-inter text-sm tracking-tight font-medium h-24 resize-none rounded-xl border-2 transition-all focus:outline-none ${darkTheme
+                  ? "bg-slate-800/60 text-white placeholder-slate-500 border-slate-700/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 backdrop-blur-sm"
+                  : "bg-white/60 text-slate-900 placeholder-slate-400 border-blue-200/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 backdrop-blur-sm"
                   }`}
               />
               <Button
-                className={`absolute right-2 bottom-2 transition-all ${darkTheme
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
-                  : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md"
+                className={`absolute right-3 bottom-3 rounded-lg transition-all active:scale-95 flex items-center justify-center w-10 h-10 p-0 ${darkTheme
+                  ? "bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl"
+                  : "bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl"
                   }`}
                 onClick={sendMessage}
               >
-                <LuSend className="text-white" size={18} />
+                <LuSend className="text-white" size={20} />
               </Button>
             </div>
+            <p className={`text-xs mt-2 ${darkTheme ? "text-slate-500" : "text-slate-500"}`}>Press Enter + Shift for new line</p>
           </div>
         </SheetFooter>
       </SheetContent>
