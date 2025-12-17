@@ -247,25 +247,28 @@ Thanks.`
             return (
               <Card
                 key={item.interview_id}
-                className="relative bg-white/90 backdrop-blur border border-slate-200/80 rounded-2xl shadow-[0_10px_40px_-24px_rgba(0,0,0,0.35)] hover:shadow-[0_14px_50px_-22px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 p-6 w-full max-w-md flex flex-col gap-4"
+                className="relative bg-gradient-to-br from-white via-white to-slate-50 border border-slate-200 rounded-2xl shadow-[0_8px_32px_-8px_rgba(59,130,246,0.1)] hover:shadow-[0_16px_48px_-12px_rgba(59,130,246,0.15)] hover:-translate-y-1.5 transition-all duration-300 p-6 w-full max-w-md flex flex-col justify-between group"
               >
-                <CardHeader className="flex flex-row items-start justify-start gap-3 pb-0">
-                  <div className="p-3 rounded-xl bg-blue-50 text-blue-600 shadow-inner shrink-0">
+                {/* Gradient Border Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/0 via-transparent to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-blue-500/5 transition-all duration-300 pointer-events-none" />
+
+                <CardHeader className="flex flex-row items-start justify-start gap-3 pb-2 relative z-10">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 shrink-0">
                     <Icon className="w-5 h-5" />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <p className="text-xs uppercase tracking-[0.08em] text-slate-500 font-semibold">Role</p>
-                    <CardTitle className="font-semibold text-xl text-slate-900 font-sora leading-tight">
+                  <div className="flex flex-col gap-1 flex-1">
+                    <p className="text-xs uppercase tracking-[0.12em] text-slate-400 font-semibold">Role</p>
+                    <CardTitle className="font-bold text-lg text-slate-900 font-sora leading-tight group-hover:text-blue-600 transition-colors duration-300">
                       {item.jobTitle}
                     </CardTitle>
                   </div>
                 </CardHeader>
 
-                <CardContent className="text-sm text-slate-600 font-inter space-y-4 pt-2">
-                  <p className="line-clamp-3 text-left leading-relaxed text-slate-700">
+                <CardContent className="text-sm text-slate-600 font-inter space-y-3 pt-2 relative z-10">
+                  <p className="line-clamp-3 text-left leading-relaxed text-slate-600 text-sm">
                     {item.jobDescription}
                   </p>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+                  <div className="flex flex-wrap items-center gap-2">
                     {(() => {
                       const tokens = ((): string[] => {
                         const explicit = item.interviewType ?? item.jobType ?? item.job_title ?? item.type ?? item.category ?? null;
@@ -289,42 +292,39 @@ Thanks.`
                         return Array.from(new Set(t)).slice(0, 5);
                       })();
                       return tokens.map((tag) => (
-                        <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 px-3 py-1 font-medium">
+                        <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-2.5 py-1 font-medium text-xs border border-blue-200/50 hover:border-blue-300 transition-colors duration-200">
                           {tag}
                         </span>
                       ));
                     })()}
                   </div>
-                  <div className="mt-2 flex items-center gap-2 text-sm text-slate-700">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium">
-                      ⏱
-                      <span className="text-slate-800">{item.interviewDuration} mins</span>
-                    </span>
+                  <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 p-2.5">
+                    <span className="text-base">⏱</span>
+                    <span className="text-slate-700 font-semibold text-sm">{item.interviewDuration} mins</span>
                   </div>
                 </CardContent>
 
-                <div className="h-px bg-slate-100" />
+                <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-3 relative z-10" />
 
-                <CardFooter className="flex justify-between gap-4 pt-2">
+                <CardFooter className="flex justify-between gap-3 pt-1 relative z-10">
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={() => {
                       const url = `${window.location.origin}/interview/${item.interview_id}`;
                       navigator.clipboard.writeText(url);
                       toast.success("Link copied to clipboard");
                     }}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 flex items-center"
+                    className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border border-blue-300 hover:from-blue-100 hover:to-blue-200 hover:border-blue-400 hover:text-blue-800 transition-all duration-200 flex items-center font-medium flex-1"
                   >
-                    Copy Link <Copy className="ml-2 w-4 h-4" />
+                    <Copy className="w-4 h-4 mr-2" /> Link
                   </Button>
 
                   <Button
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center font-medium"
                     onClick={() => handleSend(item)}
                   >
-                    Send <Send className="ml-2 w-4 h-4" />
+                    <Send className="w-4 h-4 mr-2" /> Send
                   </Button>
                 </CardFooter>
               </Card>
