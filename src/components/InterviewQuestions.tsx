@@ -272,38 +272,32 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
   };
 
   return (
-    <div className="p-4">
+    <div className="space-y-4">
       {loading && (
-        <div className="flex flex-col font-inter font-medium text-center bg-blue-100 px-6 py-4 border border-blue-400 rounded-lg mt-5">
-          <p className="text-xl flex items-center justify-center gap-5">
-            {" "}
-            <LuLoader className="animate-spin transition-all duration-500 text-black text-2xl" />{" "}
+        <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 px-6 py-5 text-center shadow-sm">
+          <p className="flex items-center justify-center gap-3 text-lg font-semibold text-slate-800">
+            <LuLoader className="h-5 w-5 animate-spin text-sky-600" />
             Generating AI Questions
           </p>
-          <p className=" text-gray-500 tracking-tight mt-3 text-base">
-            AI is generating personlaised Interview Questions tailored according
-            to your Job Description and type.
+          <p className="mt-2 text-sm text-slate-600">
+            We are crafting questions tailored to your role and interview type.
           </p>
         </div>
       )}
 
       {isError && (
-        <div className="flex flex-col font-inter font-medium text-center bg-red-100 px-6 py-4 border border-red-400 rounded-lg mt-5">
-          <p className="text-xl flex items-center justify-center gap-5">
-            {" "}
-            <LuX className=" text-red-500 text-2xl" />
-            Error Occured While Generating
+        <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-5 text-center shadow-sm">
+          <p className="flex items-center justify-center gap-3 text-lg font-semibold text-rose-700">
+            <LuX className="h-5 w-5" /> Error while generating
           </p>
-          <p className=" text-gray-500 tracking-tight mt-3 text-base">
-            Its not you , It&apos;s us. Kindly try again generating the
-            Questions from AI.
+          <p className="mt-2 text-sm text-rose-600">
+            It is on us. Please retry generating the questions.
           </p>
-
           <Button
-            className="cursor-pointer bg-red-500 hover:bg-red-600 text-white mt-5 px-4 w-fit mx-auto"
+            className="mx-auto mt-4 bg-rose-500 text-white hover:bg-rose-600"
             onClick={() => router.push("/dashboard")}
           >
-            Retry{" "}
+            Retry
           </Button>
         </div>
       )}
@@ -313,24 +307,26 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
           initial="hidden"
           animate="visible"
           variants={{
-            visible: {
-              transition: {
-                staggerChildren: 0.3,
-              },
-            },
+            visible: { transition: { staggerChildren: 0.15 } },
           }}
-          className="flex flex-col"
+          className="flex flex-col gap-4"
         >
-          <h2 className="mb-3 font-semibold font-inter text-xl">
-            Generated Questions
-          </h2>
-          <div className="bg-white px-5 py-4 max-w-[800px] mx-auto rounded-xl">
-            <div className="flex items-center justify-end mb-3">
+          <div className="rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Step 2 of 3
+                </p>
+                <h2 className="text-2xl font-semibold text-slate-900">Generated Questions</h2>
+                <p className="text-sm text-slate-600">
+                  Review, remove, or add questions before sharing the interview link.
+                </p>
+              </div>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button className="mb-4 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer">
-                    Add New Question{" "}
-                    <LuListPlus className="text-white text-xl" />
+                  <Button className="gap-2 bg-sky-600 text-white hover:bg-sky-500">
+                    Add New Question
+                    <LuListPlus className="h-5 w-5" />
                   </Button>
                 </DialogTrigger>
 
@@ -339,7 +335,6 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
                     <DialogTitle>Add Interview Question</DialogTitle>
                   </DialogHeader>
 
-                  {/* Input */}
                   <Input
                     placeholder="Enter your question"
                     value={newQuestion}
@@ -347,7 +342,6 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
                     className="mt-2"
                   />
 
-                  {/* Select Type */}
                   <Select
                     value={newType}
                     onValueChange={(value) =>
@@ -360,73 +354,82 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
                     <SelectContent>
                       <SelectItem value="Technical">Technical</SelectItem>
                       <SelectItem value="Behavioral">Behavioral</SelectItem>
-                      <SelectItem value="Problem Solving">
-                        Problem Solving
-                      </SelectItem>
+                      <SelectItem value="Problem Solving">Problem Solving</SelectItem>
                       <SelectItem value="Leadership">Leadership</SelectItem>
                       <SelectItem value="Experience">Experience</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <DialogFooter className="mt-4">
-                    <Button onClick={handleAddQuestion}>Add Question</Button>
+                    <Button className="bg-sky-600 text-white hover:bg-sky-500" onClick={handleAddQuestion}>
+                      Add Question
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
-            {questions.map((q, i) => (
-              <motion.div
-                key={i}
-                custom={i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: i * 0.3 }}
-                className="text-left mb-3"
-              >
-                <p className="text-lg font-medium tracking-tight text-gray-800 font-inter">
-                  {q.question}
-                </p>
-                <div className="flex items-center justify-between px-2">
-                  <p className="text-blue-600 my-2 font-light tracking-tight text-base font-inter">
-                    Type: {q.type}
-                  </p>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" onClick={() => handleDelete(i)}>
-                        <LuDelete className="text-xl" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Remove</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
 
-                <Separator className="my-2 bg-blue-100" />
-              </motion.div>
-            ))}
-            <div className="flex items-center justify-evenly px-4 mt-3">
-              <Button className="cursor-pointer bg-red-500 hover:bg-red-600 text-white mt-5 px-4 w-fit mx-auto">
-                Cancel <LuX className="text-xl" />
+            <div className="mt-4 space-y-3">
+              {questions.map((q, i) => (
+                <motion.div
+                  key={i}
+                  custom={i}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: i * 0.05 }}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-sky-50 text-sm font-semibold text-sky-700 border border-sky-100">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <p className="text-base font-semibold text-slate-900">
+                        {q.question}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+                          {q.type}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 border-slate-200 text-sky-600 hover:border-sky-300 hover:text-sky-700"
+                          onClick={() => handleDelete(i)}
+                          aria-label="Remove question"
+                        >
+                          <LuDelete className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+              <Button className="bg-slate-100 text-slate-800 hover:bg-slate-200">
+                Cancel <LuX className="ml-2 h-4 w-4" />
               </Button>
               <Button
                 onClick={onFinish}
                 disabled={saveLoading}
-                className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white mt-5 px-4 w-fit mx-auto"
+                className="bg-sky-600 text-white hover:bg-sky-500"
               >
                 {saveLoading && (
-                  <LuLoader className="animate-spin transition-all duration-500 text-white text-2xl" />
+                  <LuLoader className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 {saveLoading ? "Saving..." : "Finish"}
-                <LuArrowRight className="text-xl" />
+                <LuArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
-            <div className="w-full bg-gradient-to-br from-blue-600 to-pink-300 via-indigo-400 flex items-center justify-end gap-8 p-4 mt-6 rounded-xl">
-              <p className="text-white text-lg font-medium tracking-tight font-sora">
-                Become Pro User and unlock every features
+
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-sky-500/15 via-indigo-500/15 to-fuchsia-500/15 px-4 py-3 border border-slate-200">
+              <p className="text-sm font-semibold text-slate-800">
+                Need a different angle? Generate a fresh set of questions.
               </p>
-              <Button className="cursor-pointer bg-white hover:bg-gray-100 text-black px-4 ">
-                Generate New Questions <LuBrain className="text-xl" />
+              <Button className="bg-white text-slate-900 hover:bg-slate-100">
+                Generate New Questions <LuBrain className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
