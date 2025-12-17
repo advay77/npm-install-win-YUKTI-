@@ -123,8 +123,8 @@ export function AppSidebar() {
               className={clsx(
                 "group relative font-inter font-bold flex items-center justify-center gap-3 cursor-pointer w-full h-11 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden",
                 darkTheme
-                  ? "bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
-                  : "bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                  ? "bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white hover:from-gray-800 hover:to-gray-700"
+                  : "bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white hover:from-gray-800 hover:to-gray-700"
               )}
             >
               {/* Animated shine effect */}
