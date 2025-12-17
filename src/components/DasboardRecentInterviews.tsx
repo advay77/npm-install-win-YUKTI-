@@ -151,9 +151,12 @@ Thanks.`
   return (
     <div className="my-10 px-4 sm:px-6 lg:px-10">
       <div className=" flex items-center justify-between">
-        <h2 className="font-semibold text-xl font-inter capitalize ml-5" style={{ fontSize: "37px", textDecoration: "underline" }}>
-          Recent Interviews
-        </h2>
+        <div className="flex items-center gap-3 ml-5">
+          <div className="h-8 w-1 bg-gradient-to-b from-blue-600 to-blue-400 rounded-full"></div>
+          <h2 className="font-bold text-3xl font-sora bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            Recent Interviews
+          </h2>
+        </div>
 
         <div className="flex items-center gap-5 mr-10">
           <Popover open={filterOpen} onOpenChange={setFilterOpen}>

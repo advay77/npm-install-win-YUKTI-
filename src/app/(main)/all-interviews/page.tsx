@@ -144,9 +144,12 @@ const AllInterview = () => {
     >
       <div className="">
         <div className=" flex items-center justify-between">
-          <h2 className="font-semibold text-2xl font-inter capitalize ml-5">
-            All Interviews
-          </h2>
+          <div className="flex items-center gap-3 ml-5">
+            <div className="h-8 w-1 bg-gradient-to-b from-blue-600 to-blue-400 rounded-full"></div>
+            <h2 className="font-bold text-3xl font-sora bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              All Interviews
+            </h2>
+          </div>
           <div className="flex items-center gap-5 mr-10">
             <div className="space-x-2 bg-white p-2 rounded-md flex">
               <Button
