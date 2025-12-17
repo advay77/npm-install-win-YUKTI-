@@ -214,8 +214,6 @@ Ensure the interview remains focused on React
           model: "nova-2",
           language: "en-US",
         },
-
-        // Call settings
         firstMessage:
           "Hi " +
           interviewInfo?.userName +
@@ -225,9 +223,6 @@ Ensure the interview remains focused on React
         endCallMessage:
           "Thanks for chatting! Hope to see you crushing projects soon!",
         endCallPhrases: ["goodbye", "bye", "end call", "hang up"],
-
-        silenceTimeoutSeconds: 20,
-        maxDurationSeconds: 300,
       });
     } catch (error) {
       console.error("Error starting call:", error);
