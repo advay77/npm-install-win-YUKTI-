@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useTheme } from "@/context/ThemeProvider";
 import { useUserData } from "@/context/UserDetailContext";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 
@@ -31,6 +32,7 @@ type Message = {
 export function SheetDemo() {
   const { users } = useUserData();
   const { darkTheme } = useTheme();
+  const router = useRouter();
   // ----ai states
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -126,16 +128,18 @@ export function SheetDemo() {
             <div className="space-y-2">
               <h3 className={`text-sm font-semibold tracking-tight mb-4 ${darkTheme ? "text-slate-300" : "text-slate-700"}`}>Quick Actions</h3>
               <div className="grid grid-cols-2 gap-3">
-                <button className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
-                  ? "bg-gradient-to-br from-blue-600/30 to-blue-600/10 border-blue-500/50 text-blue-200 hover:from-blue-600/40 hover:to-blue-600/20 hover:border-blue-400 min-h-[96px]"
-                  : "bg-gradient-to-br from-blue-100 to-blue-50 border-blue-400 text-blue-700 hover:from-blue-200 hover:to-blue-100 hover:border-blue-500 min-h-[96px]"
-                  }`}>
-                  <div className="flex items-center justify-center gap-2 h-full flex-col">
-                    <Video size={32} className="text-current" />
-                    <p>Create Interviews</p>
-                  </div>
-                </button>
-                <button className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                <SheetClose asChild>
+                  <button onClick={() => router.push("/dashboard/create-interview")} className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                    ? "bg-gradient-to-br from-blue-600/30 to-blue-600/10 border-blue-500/50 text-blue-200 hover:from-blue-600/40 hover:to-blue-600/20 hover:border-blue-400 min-h-[96px]"
+                    : "bg-gradient-to-br from-blue-100 to-blue-50 border-blue-400 text-blue-700 hover:from-blue-200 hover:to-blue-100 hover:border-blue-500 min-h-[96px]"
+                    }`}>
+                    <div className="flex items-center justify-center gap-2 h-full flex-col">
+                      <Video size={32} className="text-current" />
+                      <p>Create Interviews</p>
+                    </div>
+                  </button>
+                </SheetClose>
+                <button onClick={() => toast.info("About page coming soon")} className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
                   ? "bg-gradient-to-br from-purple-600/30 to-purple-600/10 border-purple-500/50 text-purple-200 hover:from-purple-600/40 hover:to-purple-600/20 hover:border-purple-400 min-h-[96px]"
                   : "bg-gradient-to-br from-purple-100 to-purple-50 border-purple-400 text-purple-700 hover:from-purple-200 hover:to-purple-100 hover:border-purple-500 min-h-[96px]"
                   }`}>
@@ -144,7 +148,7 @@ export function SheetDemo() {
                     <p>About INTERVIEWX</p>
                   </div>
                 </button>
-                <button className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                <button onClick={() => toast.info("Tickets page coming soon")} className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
                   ? "bg-gradient-to-br from-pink-600/30 to-pink-600/10 border-pink-500/50 text-pink-200 hover:from-pink-600/40 hover:to-pink-600/20 hover:border-pink-400 min-h-[96px]"
                   : "bg-gradient-to-br from-pink-100 to-pink-50 border-pink-400 text-pink-700 hover:from-pink-200 hover:to-pink-100 hover:border-pink-500 min-h-[96px]"
                   }`}>
@@ -153,15 +157,17 @@ export function SheetDemo() {
                     <p>Create Tickets</p>
                   </div>
                 </button>
-                <button className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
-                  ? "bg-gradient-to-br from-emerald-600/30 to-emerald-600/10 border-emerald-500/50 text-emerald-200 hover:from-emerald-600/40 hover:to-emerald-600/20 hover:border-emerald-400 min-h-[96px]"
-                  : "bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-400 text-emerald-700 hover:from-emerald-200 hover:to-emerald-100 hover:border-emerald-500 min-h-[96px]"
-                  }`}>
-                  <div className="flex items-center justify-center gap-2 h-full flex-col">
-                    <Mail size={32} className="text-current" />
-                    <p>Send Mails</p>
-                  </div>
-                </button>
+                <SheetClose asChild>
+                  <button onClick={() => router.push("/dashboard/send-mail")} className={`p-3 rounded-xl border-2 font-sora text-xs tracking-tight text-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer font-semibold group ${darkTheme
+                    ? "bg-gradient-to-br from-emerald-600/30 to-emerald-600/10 border-emerald-500/50 text-emerald-200 hover:from-emerald-600/40 hover:to-emerald-600/20 hover:border-emerald-400 min-h-[96px]"
+                    : "bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-400 text-emerald-700 hover:from-emerald-200 hover:to-emerald-100 hover:border-emerald-500 min-h-[96px]"
+                    }`}>
+                    <div className="flex items-center justify-center gap-2 h-full flex-col">
+                      <Mail size={32} className="text-current" />
+                      <p>Send Mails</p>
+                    </div>
+                  </button>
+                </SheetClose>
               </div>
             </div>
           ) : (
