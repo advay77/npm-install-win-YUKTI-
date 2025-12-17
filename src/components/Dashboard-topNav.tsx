@@ -44,7 +44,12 @@ const DashboardTopNav = () => {
           darkTheme ? "bg-slate-900 text-white" : "bg-white text-black"
         )}
       >
-        <SidebarTrigger />
+        <SidebarTrigger className={clsx(
+          "h-10 w-10 rounded-xl transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md",
+          darkTheme
+            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+            : "bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300"
+        )} />
         <div className="flex items-center justify-between bg-blue-50 rounded-full px-3  font-inter shadow-md min-[800px]:min-w-[300px] min-[1000px]:min-w-[360px]">
           <Input
             type="text"
