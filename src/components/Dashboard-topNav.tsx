@@ -39,7 +39,12 @@ const DashboardTopNav = () => {
   return (
     <div className="relative">
       {/* Decorative gradient top bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 z-20"></div>
+      <div className={clsx(
+        "absolute top-0 left-0 right-0 h-1 bg-gradient-to-r z-20",
+        darkTheme
+          ? "from-blue-600 via-blue-500 to-blue-600"
+          : "from-gray-900 via-gray-700 to-gray-900"
+      )}></div>
 
       <div
         className={clsx(
@@ -53,13 +58,21 @@ const DashboardTopNav = () => {
             ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
             : "bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300"
         )} />
-        <div className="flex items-center justify-between bg-blue-50 rounded-full px-3  font-inter shadow-md min-[800px]:min-w-[300px] min-[1000px]:min-w-[360px]">
+        <div className={clsx(
+          "flex items-center justify-between rounded-full px-3 font-inter shadow-md min-[800px]:min-w-[300px] min-[1000px]:min-w-[360px]",
+          darkTheme
+            ? "bg-slate-800 border border-slate-700"
+            : "bg-blue-50 border border-blue-100"
+        )}>
           <Input
             type="text"
             placeholder="Search"
-            className="bg-transparent shadow-none rounded-none focus-visible:ring-0 border-none"
+            className={clsx(
+              "bg-transparent shadow-none rounded-none focus-visible:ring-0 border-none",
+              darkTheme ? "text-white placeholder:text-slate-400" : "text-black placeholder:text-gray-400"
+            )}
           />
-          <LuSearch className="text-xl text-black" />
+          <LuSearch className={clsx("text-xl", darkTheme ? "text-slate-400" : "text-black")} />
         </div>
 
         <div className="flex items-center gap-5">

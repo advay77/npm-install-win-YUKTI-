@@ -153,7 +153,10 @@ export function AppSidebar() {
                   key={item.title}
                   className={clsx(
                     "group rounded-xl transition-all duration-300",
-                    path === item.url && "bg-gradient-to-r from-blue-50 via-blue-50 to-blue-100 shadow-md shadow-blue-100/50"
+                    path === item.url && (darkTheme
+                      ? "bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 shadow-md shadow-blue-700/30"
+                      : "bg-gradient-to-r from-blue-50 via-blue-50 to-blue-100 shadow-md shadow-blue-100/50"
+                    )
                   )}
                 >
                   <SidebarMenuButton
@@ -161,9 +164,11 @@ export function AppSidebar() {
                     className={clsx(
                       "flex items-center gap-3 h-11 px-4 rounded-xl transition-all duration-300",
                       path === item.url
-                        ? "text-blue-700 font-bold"
+                        ? darkTheme
+                          ? "text-blue-300 font-bold"
+                          : "text-blue-700 font-bold"
                         : darkTheme
-                          ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                          ? "text-gray-400 hover:text-white hover:bg-blue-900/40 hover:shadow-md"
                           : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 hover:shadow-sm"
                     )}
                   >
