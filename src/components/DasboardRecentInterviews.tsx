@@ -247,12 +247,12 @@ Thanks.`
             return (
               <Card
                 key={item.interview_id}
-                className="relative bg-gradient-to-br from-white via-white to-slate-50 border border-slate-200 rounded-2xl shadow-[0_8px_32px_-8px_rgba(59,130,246,0.1)] hover:shadow-[0_16px_48px_-12px_rgba(59,130,246,0.15)] hover:-translate-y-1.5 transition-all duration-300 p-6 w-full max-w-md flex flex-col justify-between group"
+                className="relative bg-gradient-to-br from-white via-white to-slate-50 border border-slate-200 rounded-2xl shadow-[0_8px_32px_-8px_rgba(59,130,246,0.1)] hover:shadow-[0_16px_48px_-12px_rgba(59,130,246,0.15)] hover:-translate-y-1.5 transition-all duration-300 p-5 w-full max-w-md flex flex-col justify-between group"
               >
                 {/* Gradient Border Effect */}
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/0 via-transparent to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-blue-500/5 transition-all duration-300 pointer-events-none" />
 
-                <CardHeader className="flex flex-row items-start justify-start gap-3 pb-2 relative z-10">
+                <CardHeader className="flex flex-row items-start justify-start gap-3 pb-1 relative z-10">
                   <div className="p-3 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 shrink-0">
                     <Icon className="w-5 h-5" />
                   </div>
@@ -264,8 +264,8 @@ Thanks.`
                   </div>
                 </CardHeader>
 
-                <CardContent className="text-sm text-slate-600 font-inter space-y-3 pt-2 relative z-10">
-                  <p className="line-clamp-3 text-left leading-relaxed text-slate-600 text-sm">
+                <CardContent className="text-sm text-slate-600 font-inter space-y-2 pt-1 relative z-10">
+                  <p className="line-clamp-2 text-left leading-relaxed text-slate-600 text-sm">
                     {item.jobDescription}
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
@@ -304,9 +304,9 @@ Thanks.`
                   </div>
                 </CardContent>
 
-                <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-3 relative z-10" />
+                <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-2 relative z-10" />
 
-                <CardFooter className="flex justify-between gap-3 pt-1 relative z-10">
+                <CardFooter className="flex justify-between gap-3 pt-0 relative z-10">
                   <Button
                     size="sm"
                     onClick={() => {
