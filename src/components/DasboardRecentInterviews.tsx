@@ -166,10 +166,7 @@ Thanks.`
         <div className="flex items-center gap-5 mr-10">
           <Popover open={filterOpen} onOpenChange={setFilterOpen}>
             <PopoverTrigger asChild>
-              <Button className={`flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md ${darkTheme
-                ? "bg-gradient-to-r from-blue-900 to-blue-800 text-blue-300 border border-blue-700 hover:from-blue-800 hover:to-blue-700"
-                : "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border border-blue-300 hover:from-blue-100 hover:to-blue-200 hover:border-blue-400"
-                }`}>
+              <Button className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border border-blue-300 hover:from-blue-100 hover:to-blue-200 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md">
                 <Filter className="w-4 h-4" />
                 <span className="font-semibold">Filters</span>
                 {(selectedTypes.length > 0 || selectedDuration !== null) && (
