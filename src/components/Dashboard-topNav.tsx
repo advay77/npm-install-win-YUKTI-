@@ -160,13 +160,13 @@ const DashboardTopNav = () => {
           "absolute inset-0",
           darkTheme
             ? "bg-gradient-to-r from-blue-600/60 via-blue-500/50 to-blue-600/60"
-            : "bg-gradient-to-r from-blue-200/60 via-blue-300/40 to-blue-200/60"
+            : "bg-gradient-to-r from-blue-400/70 via-blue-500/60 to-blue-400/70"
         )}>
           <div className={clsx(
             "absolute inset-0",
             darkTheme
               ? "shadow-[0_0_20px_rgba(59,130,246,0.5)]"
-              : "shadow-[0_0_10px_rgba(147,197,253,0.4)]"
+              : "shadow-[0_0_15px_rgba(59,130,246,0.5)]"
           )} />
         </div>
       </div>
