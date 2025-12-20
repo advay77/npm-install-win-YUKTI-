@@ -8,6 +8,7 @@ import { ChatGroq } from "@langchain/groq";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
+import { createClient } from "@supabase/supabase-js";
 
 // --- Schema for ATS report ---
 const feedbackSchema = z.object({
@@ -38,6 +39,37 @@ const llm = new ChatGroq({
   maxTokens: 600,
 });
 
+// --- Supabase admin client for signing URLs ---
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE!
+);
+
+const urlRegex = /\/storage\/v1\/object\/(public|private|authenticated)\/([^/]+)\/(.+)/;
+
+async function ensureSignedUrl(rawUrl: string): Promise<string> {
+  if (!rawUrl) throw new Error("No resume URL provided");
+
+  // If already signed (token present), return as-is
+  if (rawUrl.includes("token=")) return rawUrl;
+
+  // Only sign Supabase storage URLs we can parse
+  const match = rawUrl.match(urlRegex);
+  if (!match) return rawUrl;
+
+  const [, , bucket, filePath] = match;
+
+  const { data, error } = await supabaseAdmin.storage
+    .from(bucket)
+    .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 days
+
+  if (error || !data?.signedUrl) {
+    throw new Error(`Failed to sign resume URL: ${error?.message ?? "unknown"}`);
+  }
+
+  return data.signedUrl;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { resumeURL } = await req.json();
@@ -46,10 +78,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No resumeURL provided" }, { status: 400 });
     }
 
-    console.log("Fetching resume from:", resumeURL);
+    const signedUrl = await ensureSignedUrl(resumeURL);
+    console.log("Fetching resume from:", signedUrl);
 
     // --- Download resume into tmp dir ---
-    const response = await fetch(resumeURL);
+    const response = await fetch(signedUrl);
     if (!response.ok) {
       console.error("Failed to fetch resume. Status:", response.status);
       return NextResponse.json({
