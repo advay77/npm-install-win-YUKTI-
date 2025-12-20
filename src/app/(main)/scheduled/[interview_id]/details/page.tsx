@@ -329,9 +329,9 @@ export default function InterviewDetailsPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-3 sm:justify-end">
+                          <div className="flex flex-wrap gap-3 sm:justify-end items-center">
                             {avgScore !== null && (
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${avgScore < 5
+                              <span className={`px-3 py-1 rounded-full text-xs justify-center font-semibold ${avgScore < 5
                                 ? darkTheme ? "bg-red-500/20 text-red-200" : "bg-red-50 text-red-600"
                                 : avgScore < 7
                                   ? darkTheme ? "bg-amber-500/20 text-amber-200" : "bg-amber-50 text-amber-700"
