@@ -353,26 +353,6 @@ const ScheduledInterview = () => {
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 mt-4">
-                              <Link href={`/scheduled/${interview.interview_id}/details`} className="flex-1">
-                                <Button variant="outline" size="sm" className={`w-full text-xs font-medium ${darkTheme
-                                  ? "border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:border-blue-500"
-                                  : "border-blue-200 text-blue-600 hover:bg-blue-50/50 hover:border-blue-400"
-                                  }`}>
-                                  <LuActivity className="mr-1.5 h-3.5 w-3.5" /> Report
-                                </Button>
-                              </Link>
-                              {candidate.resumeURL && (
-                                <Link href={`/scheduled/${interview.interview_id}/details`} className="flex-1">
-                                  <Button variant="outline" size="sm" className={`w-full text-xs font-medium ${darkTheme
-                                    ? "border-slate-600 text-slate-300 hover:bg-slate-800/50 hover:border-blue-500"
-                                    : "border-blue-200 text-blue-600 hover:bg-blue-50/50 hover:border-blue-400"
-                                    }`}>
-                                    <LuDock className="mr-1.5 h-3.5 w-3.5" /> Resume
-                                  </Button>
-                                </Link>
-                              )}
-                            </div>
                           </Card>
                         );
                       })}
