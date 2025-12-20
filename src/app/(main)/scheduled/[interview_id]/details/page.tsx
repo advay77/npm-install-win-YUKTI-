@@ -376,65 +376,64 @@ export default function InterviewDetailsPage() {
           )}
         </div>
       </div>
-
-      {/* CANDIDATE DIALOG */}
       <Dialog
         open={!!selectedCandidate}
         onOpenChange={() => setSelectedCandidate(null)}
       >
-        <DialogContent className={`sm:max-w-[600px] ${darkTheme ? "bg-slate-900 text-slate-100" : ""}`}>
+        <DialogContent
+          className={`sm:max-w-[760px] ${darkTheme
+            ? "bg-slate-900/95 border border-slate-800 shadow-2xl"
+            : "bg-white border border-slate-200 shadow-xl"}`}
+        >
           <DialogHeader>
-            <DialogTitle className="text-xl font-sora tracking-tight flex items-center justify-between px-8">
-              <div>
-                Candidate Details <LuDatabase className="inline-flex ml-3" />
+            <DialogTitle className={`text-2xl font-sora tracking-tight flex items-center justify-between px-4 sm:px-6 ${darkTheme ? "text-white" : "text-slate-900"}`}>
+              <div className="flex items-center gap-2">
+                <span className={`w-10 h-10 rounded-lg flex items-center justify-center ${darkTheme ? "bg-blue-500/15 text-blue-200" : "bg-blue-50 text-blue-600"}`}>
+                  <LuDatabase />
+                </span>
+                <span>Candidate Details</span>
               </div>
 
               <div
-                className={`${selectedCandidate?.feedback?.data?.feedback
-                  ?.recommendation === "No"
-                  ? "bg-red-500/30"
-                  : "bg-green-500/30"
-                  } w-fit p-2 rounded-md`}
+                className={`text-sm font-semibold px-3 py-1 rounded-full border ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "No"
+                  ? darkTheme
+                    ? "bg-red-500/15 border-red-700 text-red-100"
+                    : "bg-red-50 border-red-200 text-red-700"
+                  : darkTheme
+                    ? "bg-emerald-500/15 border-emerald-700 text-emerald-100"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-700"}`}
               >
-                <p className="text-base font-inter font-medium text-black">
-                  Recomended:{" "}
-                  {selectedCandidate?.feedback?.data?.feedback?.recommendation}
-                </p>
+                Recommended: {selectedCandidate?.feedback?.data?.feedback?.recommendation || "-"}
               </div>
             </DialogTitle>
           </DialogHeader>
           {selectedCandidate && (
-            <div className="mt-3">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold capitalize text-lg font-inter">
-                  Name: {selectedCandidate.userName}
-                </p>
-                <p className="text-base font-inter text-muted-foreground max-w-[220px] truncate">
-                  Email: {selectedCandidate.userEmail}
-                </p>
-                {/* {selectedCandidate.resumeURL && (
-                  <a
-                    href={selectedCandidate.resumeURL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-500 underline"
-                  >
-                    View Resume
-                  </a>
-                )} */}
+            <div className="mt-4 space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <p className={`font-semibold capitalize text-lg font-inter ${darkTheme ? "text-white" : "text-slate-900"}`}>
+                    {selectedCandidate.userName}
+                  </p>
+                  <p className={`text-sm font-inter ${darkTheme ? "text-slate-400" : "text-slate-600"}`}>
+                    Email: {selectedCandidate.userEmail}
+                  </p>
+                </div>
               </div>
 
               {/* Feedback Ratings with Progress */}
               {selectedCandidate.feedback?.data?.feedback?.rating && (
-                <div className="space-y-3 mt-5">
+                <div className="space-y-3">
                   {Object.entries(
                     selectedCandidate.feedback.data.feedback.rating
                   ).map(([key, val]) => (
-                    <div key={key}>
-                      <p className="capitalize text-base font-inter font-medium mb-1">
-                        {key}
-                      </p>
-                      <Progress value={(val ?? 0) * 10} />
+                    <div key={key} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm font-medium font-inter">
+                        <span className="capitalize">{key}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-md ${darkTheme ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
+                          {(val ?? 0)}/10
+                        </span>
+                      </div>
+                      <Progress value={(val ?? 0) * 10} className={darkTheme ? "bg-slate-800" : ""} />
                     </div>
                   ))}
                 </div>
@@ -442,11 +441,9 @@ export default function InterviewDetailsPage() {
 
               {/* Summary */}
               {selectedCandidate.feedback?.data?.feedback?.summary && (
-                <div className="mt-5">
-                  <h3 className="font-semibold font-inter text-base ">
-                    Summary
-                  </h3>
-                  <p className="text-sm tracking-tight font-inter">
+                <div className={`p-4 rounded-xl border ${darkTheme ? "border-slate-800 bg-slate-900/70" : "border-slate-200 bg-slate-50"}`}>
+                  <h3 className="font-semibold font-inter text-base mb-1">Summary</h3>
+                  <p className={`text-sm leading-relaxed font-inter ${darkTheme ? "text-slate-200" : "text-slate-700"}`}>
                     {selectedCandidate.feedback.data.feedback.summary}
                   </p>
                 </div>
@@ -454,60 +451,49 @@ export default function InterviewDetailsPage() {
 
               {/* Recommendation */}
               {selectedCandidate.feedback?.data?.feedback?.recommendation && (
-                <div className="mt-5">
-                  <h3 className="font-semibold font-inter text-base ">
-                    Recommendation
-                  </h3>
-                  <p className="text-sm tracking-tight font-inter">
-                    {/* {selectedCandidate.feedback.data.feedback.recommendation} –{" "} */}
-                    {
-                      selectedCandidate.feedback.data.feedback
-                        .recommendationMessage
-                    }
+                <div className={`p-4 rounded-xl border ${darkTheme ? "border-slate-800 bg-slate-900/70" : "border-slate-200 bg-slate-50"}`}>
+                  <h3 className="font-semibold font-inter text-base mb-1">Recommendation</h3>
+                  <p className={`text-sm leading-relaxed font-inter ${darkTheme ? "text-slate-200" : "text-slate-700"}`}>
+                    {selectedCandidate.feedback.data.feedback.recommendationMessage}
                   </p>
                 </div>
               )}
             </div>
           )}
 
-          {selectedCandidate?.feedback?.data?.feedback?.recommendation ===
-            "No" ? (
-            <div className="mt-5 bg-red-500/30 border border-red-600 rounded-md p-3">
-              <div className="flex items-center justify-between">
-                <p className="tracking-tight text-sm font-inter">
-                  Candidate is been rejected by AI interviewer, But you can
-                  still Revisit this candidate
-                </p>
-
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedCandidate(null);
-                    setMailCandidate(selectedCandidate);
-                  }}
-                >
-                  Send Mail <LuSend />
-                </Button>
-              </div>
+          {selectedCandidate?.feedback?.data?.feedback?.recommendation === "No" ? (
+            <div className={`mt-6 rounded-xl border flex items-center justify-between gap-3 px-4 py-3 ${darkTheme
+              ? "bg-red-500/15 border-red-700 text-red-100"
+              : "bg-red-50 border-red-200 text-red-800"}`}>
+              <p className="text-sm font-inter leading-relaxed">
+                Candidate was rejected by AI interviewer, but you can revisit and follow up.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedCandidate(null);
+                  setMailCandidate(selectedCandidate);
+                }}
+              >
+                Send Mail <LuSend />
+              </Button>
             </div>
           ) : (
-            <div className="mt-5 bg-green-500/30 border border-green-600 rounded-md p-3">
-              <div className="flex items-center justify-between">
-                <p className="tracking-tight text-sm font-inter">
-                  Candidate has been approved by AI interviewer, And Recomended
-                  for this Job
-                </p>
-
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedCandidate(null);
-                    setMailCandidate(selectedCandidate);
-                  }}
-                >
-                  Send Mail <LuSend />
-                </Button>
-              </div>
+            <div className={`mt-6 rounded-xl border flex items-center justify-between gap-3 px-4 py-3 ${darkTheme
+              ? "bg-emerald-500/15 border-emerald-700 text-emerald-100"
+              : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
+              <p className="text-sm font-inter leading-relaxed">
+                Candidate approved by AI interviewer. You may proceed or send next steps.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedCandidate(null);
+                  setMailCandidate(selectedCandidate);
+                }}
+              >
+                Send Mail <LuSend />
+              </Button>
             </div>
           )}
         </DialogContent>
