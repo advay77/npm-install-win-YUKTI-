@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/services/supabaseClient";
+import { supabase, getSignedResumeUrl } from "@/services/supabaseClient";
 import { useUserData } from "@/context/UserDetailContext";
 import { useTheme } from "@/context/ThemeProvider";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -81,6 +81,7 @@ export default function InterviewDetailsPage() {
   const { darkTheme } = useTheme();
 
   const [resumeCandidate, setResumeCandidate] = useState<any | null>(null);
+  const [signedResumeUrl, setSignedResumeUrl] = useState<string | null>(null);
   // const [atsReport, setAtsReport] = useState<any>(null);
   const [atsReports, setAtsReports] = useState<Record<string, any>>({});
   const [loadingReport, setLoadingReport] = useState(false);
@@ -141,6 +142,15 @@ export default function InterviewDetailsPage() {
       supabase.removeChannel(channel);
     };
   }, [interview_id, users]);
+
+  // Generate signed URL when resume candidate changes
+  useEffect(() => {
+    if (resumeCandidate?.resumeURL) {
+      getSignedResumeUrl(resumeCandidate.resumeURL).then(setSignedResumeUrl);
+    } else {
+      setSignedResumeUrl(null);
+    }
+  }, [resumeCandidate]);
 
   const GetInterviewList = async () => {
     setLoading(true);
@@ -533,16 +543,26 @@ export default function InterviewDetailsPage() {
           <div className={`grid grid-cols-2 h-[calc(85vh-80px)] overflow-hidden ${darkTheme ? "bg-slate-800/30" : "bg-slate-50"}`}>
             {/* Left: Resume Viewer */}
             <div className={`h-full border-r w-full flex flex-col items-center justify-center p-4 overflow-hidden ${darkTheme ? "border-slate-700 bg-slate-800/20" : "border-slate-200 bg-slate-50"}`}>
-              {resumeCandidate?.resumeURL ? (
+              {resumeCandidate?.resumeURL && signedResumeUrl ? (
                 <div className="w-full h-full flex flex-col gap-3">
-                  <embed
-                    src={resumeCandidate.resumeURL}
+                  <object
+                    data={signedResumeUrl}
                     type="application/pdf"
                     className="w-full flex-1 rounded-lg"
-                  />
+                  >
+                    <div className="flex flex-col items-center gap-4 justify-center h-full">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${darkTheme ? "bg-blue-500/20 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
+                        <LuDock className="w-8 h-8" />
+                      </div>
+                      <div className="text-center">
+                        <p className={`text-sm font-semibold mb-2 ${darkTheme ? "text-slate-100" : "text-slate-900"}`}>PDF Preview Not Available</p>
+                        <p className={`text-xs ${darkTheme ? "text-slate-400" : "text-slate-500"}`}>Click buttons below to view or download</p>
+                      </div>
+                    </div>
+                  </object>
                   <div className="flex gap-2 flex-shrink-0">
                     <a
-                      href={resumeCandidate.resumeURL}
+                      href={signedResumeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${darkTheme ? "bg-blue-600 hover:bg-blue-500 text-white shadow-md" : "bg-blue-600 hover:bg-blue-500 text-white shadow-md"}`}
@@ -551,13 +571,18 @@ export default function InterviewDetailsPage() {
                       Open in New Tab
                     </a>
                     <a
-                      href={resumeCandidate.resumeURL}
+                      href={signedResumeUrl}
                       download
                       className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all border ${darkTheme ? "border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100" : "border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-900"}`}
                     >
                       <Download className="w-4 h-4" />
                     </a>
                   </div>
+                </div>
+              ) : resumeCandidate?.resumeURL ? (
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <LucideLoader className="animate-spin w-8 h-8" />
+                  <p className={`text-sm font-medium ${darkTheme ? "text-slate-400" : "text-slate-500"}`}>Loading resume...</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3 text-center">
