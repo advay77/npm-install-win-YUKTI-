@@ -42,6 +42,14 @@ const Interview = () => {
 
   const uploadResume = async () => {
     if (!file) return;
+    // Reject oversized files early (Supabase default limit ~50MB)
+    const MAX_BYTES = 50 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      toast.error("File too large", {
+        description: "Please upload a PDF under 50MB.",
+      });
+      return;
+    }
     setUploading(true);
 
     const now = new Date();
@@ -59,6 +67,9 @@ const Interview = () => {
 
     if (error) {
       console.error("Upload error:", error.message);
+      toast.error("Resume upload failed", {
+        description: error.message,
+      });
     } else {
       // Get public URL
       const { data } = supabase.storage.from("resume").getPublicUrl(filePath);
@@ -66,6 +77,19 @@ const Interview = () => {
       toast.success("Resume uploaded successfully!");
       setUploaded(true);
       // console.log("Resume URL:", data.publicUrl);
+      // Optional: verify object exists in bucket
+      try {
+        const { data: listData, error: listErr } = await supabase.storage
+          .from("resume")
+          .list(timestamp);
+        if (listErr) {
+          console.warn("List verify error:", listErr.message);
+        } else if (!listData || listData.length === 0) {
+          console.warn("Uploaded file not found in listing for:", timestamp);
+        }
+      } catch (e: any) {
+        console.warn("List verification exception:", e?.message || String(e));
+      }
     }
 
     setUploading(false);
@@ -237,12 +261,22 @@ const Interview = () => {
             <div className="flex w-full items-center justify-end">
               <Button
                 className="h-11 rounded-none bg-gradient-to-r from-sky-600 to-indigo-600 px-5 text-white shadow-md hover:from-sky-500 hover:to-indigo-500"
-                disabled={loading || !userName || !userEmail}
+                disabled={
+                  loading ||
+                  !userName ||
+                  !userEmail ||
+                  (interviewDetails?.acceptResume && !uploaded)
+                }
                 onClick={() => onJoinInterview()}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Join Interview
                 <LuMoveRight className="ml-2 h-4 w-4" />
               </Button>
+              {interviewDetails?.acceptResume && !uploaded && (
+                <p className="ml-3 text-xs text-slate-500">
+                  Please upload your resume to proceed.
+                </p>
+              )}
             </div>
           </div>
         </div>

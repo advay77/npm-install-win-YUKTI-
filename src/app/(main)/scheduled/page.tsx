@@ -37,6 +37,7 @@ const ScheduledInterview = () => {
   const [loading, setLoading] = useState(false);
   const [interviewList, setInterviewList] = useState<any>([]);
   const [view, setView] = useState("grid");
+  const [usedFallback, setUsedFallback] = useState(false);
 
   useEffect(() => {
     users && GetInterviewList();
@@ -71,6 +72,7 @@ const ScheduledInterview = () => {
   const GetInterviewList = async () => {
     setLoading(true);
     try {
+      // Primary: attempt FK-based nested select
       const result = await supabase
         .from("interviews")
         .select(
@@ -78,10 +80,57 @@ const ScheduledInterview = () => {
         )
         .eq("userEmail", users?.[0].email)
         .order("created_at", { ascending: false });
-      console.log("interview data with candidates", result.data);
-      setInterviewList(result.data || []);
+
+      let interviews = result.data || [];
+
+      // If no interviews found for this recruiter, show all interviews (admin-style view)
+      if (!interviews || interviews.length === 0) {
+        const all = await supabase
+          .from("interviews")
+          .select(
+            "jobTitle, jobDescription, interview_id, created_at, userEmail, interview-details(userEmail, userName, feedback, resumeURL, created_at)"
+          )
+          .order("created_at", { ascending: false });
+        interviews = all.data || [];
+        setUsedFallback(true);
+      } else {
+        setUsedFallback(false);
+      }
+
+      // Fallback: if FK not configured or nested arrays empty, fetch interview-details manually
+      const allEmpty = Array.isArray(interviews) &&
+        interviews.length > 0 &&
+        interviews.every((it: any) => !it["interview-details"] || it["interview-details"].length === 0);
+
+      if (allEmpty) {
+        const ids = interviews.map((i: any) => i.interview_id).filter(Boolean);
+        if (ids.length > 0) {
+          const { data: details, error: detailsErr } = await supabase
+            .from("interview-details")
+            .select("userEmail, userName, feedback, resumeURL, created_at, interview_id")
+            .in("interview_id", ids);
+          if (!detailsErr && Array.isArray(details)) {
+            const byId: Record<string, any[]> = {};
+            details.forEach((d) => {
+              const key = (d as any).interview_id;
+              byId[key] = byId[key] || [];
+              byId[key].push(d);
+            });
+            interviews = interviews.map((i: any) => ({
+              ...i,
+              ["interview-details"]: byId[i.interview_id] || [],
+            }));
+          } else if (detailsErr) {
+            console.warn("Manual details fetch error:", detailsErr.message);
+          }
+        }
+      }
+
+      console.log("interview data with candidates", interviews);
+      setInterviewList(interviews);
     } catch (err) {
       console.error("Error fetching interviews:", err);
+      toast("Error fetching interviews list");
       setInterviewList([]);
     } finally {
       setLoading(false);
@@ -165,6 +214,11 @@ const ScheduledInterview = () => {
               }`}>
               Interview Results & Candidates
             </h2>
+            {usedFallback && (
+              <span className={`ml-2 px-2.5 py-1 rounded-full text-xs font-semibold ${darkTheme ? "bg-slate-800 border border-slate-700 text-slate-300" : "bg-blue-50 border border-blue-200 text-blue-700"}`}>
+                Showing all interviews
+              </span>
+            )}
           </div>
 
           {/* View Toggle Buttons */}

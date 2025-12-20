@@ -80,6 +80,7 @@ const StartInterview = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [isCallActive, setIsCallActive] = useState(false);
+  const [hasCallStartToast, setHasCallStartToast] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<string>("");
   const [generateLoading, setGenerateLoading] = useState<boolean>(false);
@@ -355,19 +356,23 @@ Ensure the interview remains focused on React
       console.log("Call has started");
       setIsCallActive(true);
       setLoading(false);
-      toast.info("Interview started", {
-        description: (
-          <span className="text-sm text-gray-600 font-medium">
-            Your interview has started. <span className="text-blue-600">All the best!</span>
-          </span>
-        ),
-      });
+      if (!hasCallStartToast) {
+        setHasCallStartToast(true);
+        toast.info("Interview started", {
+          description: (
+            <span className="text-sm text-gray-600 font-medium">
+              Your interview has started. <span className="text-blue-600">All the best!</span>
+            </span>
+          ),
+        });
+      }
     };
 
     const handleCallEnd = () => {
       console.log("Call has stopped");
       setIsCallActive(false);
       setCallFinished(true);
+      setHasCallStartToast(false);
     };
 
     const handleError = (e: any) => {
