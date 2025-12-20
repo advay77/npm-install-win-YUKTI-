@@ -85,6 +85,7 @@ export default function InterviewDetailsPage() {
   // const [atsReport, setAtsReport] = useState<any>(null);
   const [atsReports, setAtsReports] = useState<Record<string, any>>({});
   const [loadingReport, setLoadingReport] = useState(false);
+  const [downloadingResume, setDownloadingResume] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [interviewList, setInterviewList] = useState<Interview[] | null>(null);
@@ -199,6 +200,37 @@ export default function InterviewDetailsPage() {
       console.error("Error generating ATS report:", err);
     } finally {
       setLoadingReport(false);
+    }
+  };
+
+  const handleDownloadResume = async () => {
+    if (!resumeCandidate) return;
+    setDownloadingResume(true);
+    try {
+      const url = signedResumeUrl
+        ? signedResumeUrl
+        : resumeCandidate.resumeURL
+          ? await getSignedResumeUrl(resumeCandidate.resumeURL)
+          : null;
+
+      if (!url) throw new Error("Resume URL is not available");
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "resume.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Error downloading resume:", error);
+    } finally {
+      setDownloadingResume(false);
     }
   };
 
@@ -583,13 +615,19 @@ export default function InterviewDetailsPage() {
                       <LuDock className="w-4 h-4" />
                       Open in New Tab
                     </a>
-                    <a
-                      href={signedResumeUrl}
-                      download
+                    <Button
+                      type="button"
+                      onClick={handleDownloadResume}
+                      disabled={downloadingResume}
                       className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all border ${darkTheme ? "border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100" : "border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-900"}`}
                     >
-                      <Download className="w-4 h-4" />
-                    </a>
+                      {downloadingResume ? (
+                        <LucideLoader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                      <span>{downloadingResume ? "Preparing" : "Download"}</span>
+                    </Button>
                   </div>
                 </div>
               ) : resumeCandidate?.resumeURL ? (
