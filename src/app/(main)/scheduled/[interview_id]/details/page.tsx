@@ -389,7 +389,7 @@ export default function InterviewDetailsPage() {
             <DialogTitle className={`text-2xl font-sora tracking-tight flex items-center justify-between px-4 sm:px-6 ${darkTheme ? "text-white" : "text-slate-900"}`}>
               <div className="flex items-center gap-2">
                 <span className={`w-10 h-10 rounded-lg flex items-center justify-center ${darkTheme ? "bg-blue-500/15 text-blue-200" : "bg-blue-50 text-blue-600"}`}>
-                  <UserCircle2 className="h-5 w-5" />
+                  <UserCircle2 className="h-6 w-6" />
                 </span>
                 <span>Candidate Details</span>
               </div>
