@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Ghost, LucideLoader, LucideLoader2 } from "lucide-react";
+import { Ghost, LucideLoader, LucideLoader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import {
   LuActivity,
   LuDatabase,
@@ -428,8 +428,8 @@ export default function InterviewDetailsPage() {
                   ).map(([key, val]) => (
                     <div key={key} className="space-y-1">
                       <div className="flex items-center justify-between text-sm font-medium font-inter">
-                        <span className="capitalize">{key}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-md ${darkTheme ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
+                        <span className={`capitalize ${darkTheme ? "text-slate-100" : "text-slate-900"}`}>{key}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-md ${darkTheme ? "bg-slate-800 text-slate-100" : "bg-slate-100 text-slate-700"}`}>
                           {(val ?? 0)}/10
                         </span>
                       </div>
@@ -441,9 +441,9 @@ export default function InterviewDetailsPage() {
 
               {/* Summary */}
               {selectedCandidate.feedback?.data?.feedback?.summary && (
-                <div className={`p-4 rounded-xl border ${darkTheme ? "border-slate-800 bg-slate-900/70" : "border-slate-200 bg-slate-50"}`}>
-                  <h3 className="font-semibold font-inter text-base mb-1">Summary</h3>
-                  <p className={`text-sm leading-relaxed font-inter ${darkTheme ? "text-slate-200" : "text-slate-700"}`}>
+                <div className={`p-4 rounded-xl border ${darkTheme ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"}`}>
+                  <h3 className={`font-semibold font-inter text-base mb-2 ${darkTheme ? "text-slate-100" : "text-slate-900"}`}>Summary</h3>
+                  <p className={`text-sm leading-relaxed font-inter ${darkTheme ? "text-slate-300" : "text-slate-700"}`}>
                     {selectedCandidate.feedback.data.feedback.summary}
                   </p>
                 </div>
@@ -451,9 +451,9 @@ export default function InterviewDetailsPage() {
 
               {/* Recommendation */}
               {selectedCandidate.feedback?.data?.feedback?.recommendation && (
-                <div className={`p-4 rounded-xl border ${darkTheme ? "border-slate-800 bg-slate-900/70" : "border-slate-200 bg-slate-50"}`}>
-                  <h3 className="font-semibold font-inter text-base mb-1">Recommendation</h3>
-                  <p className={`text-sm leading-relaxed font-inter ${darkTheme ? "text-slate-200" : "text-slate-700"}`}>
+                <div className={`p-4 rounded-xl border ${darkTheme ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"}`}>
+                  <h3 className={`font-semibold font-inter text-base mb-2 ${darkTheme ? "text-slate-100" : "text-slate-900"}`}>Recommendation</h3>
+                  <p className={`text-sm leading-relaxed font-inter ${darkTheme ? "text-slate-300" : "text-slate-700"}`}>
                     {selectedCandidate.feedback.data.feedback.recommendationMessage}
                   </p>
                 </div>
@@ -462,38 +462,58 @@ export default function InterviewDetailsPage() {
           )}
 
           {selectedCandidate?.feedback?.data?.feedback?.recommendation === "No" ? (
-            <div className={`mt-6 rounded-xl border flex items-center justify-between gap-3 px-4 py-3 ${darkTheme
-              ? "bg-red-500/15 border-red-700 text-red-100"
-              : "bg-red-50 border-red-200 text-red-800"}`}>
-              <p className="text-sm font-inter leading-relaxed">
-                Candidate was rejected by AI interviewer, but you can revisit and follow up.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedCandidate(null);
-                  setMailCandidate(selectedCandidate);
-                }}
-              >
-                Send Mail <LuSend />
-              </Button>
+            <div className={`mt-6 rounded-xl overflow-hidden ${darkTheme
+              ? "bg-gradient-to-r from-red-950/40 to-red-900/20 border border-red-800/40"
+              : "bg-gradient-to-r from-red-50 to-red-100/50 border border-red-200"}`}>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <AlertTriangle className={`h-5 w-5 flex-shrink-0 ${darkTheme ? "text-red-300" : "text-red-600"}`} />
+                  <p className={`text-sm font-medium font-inter leading-relaxed ${darkTheme ? "text-red-100" : "text-red-900"}`}>
+                    Candidate was rejected by AI interviewer, but you can revisit and follow up.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={darkTheme
+                    ? "border-red-700/60 bg-red-900/30 text-red-50 hover:bg-red-800/50 hover:border-red-600 font-semibold whitespace-nowrap shadow-md"
+                    : "border-red-300 bg-white text-red-700 hover:bg-red-50 hover:border-red-400 font-semibold whitespace-nowrap shadow-sm"}
+                  onClick={() => {
+                    setSelectedCandidate(null);
+                    setMailCandidate(selectedCandidate);
+                  }}
+                >
+                  <LuSend className="mr-1.5 h-4 w-4" />
+                  Send Mail
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className={`mt-6 rounded-xl border flex items-center justify-between gap-3 px-4 py-3 ${darkTheme
-              ? "bg-emerald-500/15 border-emerald-700 text-emerald-100"
-              : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
-              <p className="text-sm font-inter leading-relaxed">
-                Candidate approved by AI interviewer. You may proceed or send next steps.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedCandidate(null);
-                  setMailCandidate(selectedCandidate);
-                }}
-              >
-                Send Mail <LuSend />
-              </Button>
+            <div className={`mt-6 rounded-xl overflow-hidden ${darkTheme
+              ? "bg-gradient-to-r from-emerald-950/40 to-emerald-900/20 border border-emerald-800/40"
+              : "bg-gradient-to-r from-emerald-50 to-emerald-100/50 border border-emerald-200"}`}>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <CheckCircle2 className={`h-5 w-5 flex-shrink-0 ${darkTheme ? "text-emerald-300" : "text-emerald-600"}`} />
+                  <p className={`text-sm font-medium font-inter leading-relaxed ${darkTheme ? "text-emerald-100" : "text-emerald-900"}`}>
+                    Candidate approved by AI interviewer. You may proceed or send next steps.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={darkTheme
+                    ? "border-emerald-700/60 bg-emerald-900/30 text-emerald-50 hover:bg-emerald-800/50 hover:border-emerald-600 font-semibold whitespace-nowrap shadow-md"
+                    : "border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 font-semibold whitespace-nowrap shadow-sm"}
+                  onClick={() => {
+                    setSelectedCandidate(null);
+                    setMailCandidate(selectedCandidate);
+                  }}
+                >
+                  <LuSend className="mr-1.5 h-4 w-4" />
+                  Send Mail
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
