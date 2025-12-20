@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Ghost, LucideLoader, LucideLoader2, AlertTriangle, CheckCircle2, UserCircle2 } from "lucide-react";
+import { Ghost, LucideLoader, LucideLoader2, AlertTriangle, CheckCircle2, UserCircle2, Download } from "lucide-react";
 import {
   LuActivity,
   LuDatabase,
@@ -524,69 +524,105 @@ export default function InterviewDetailsPage() {
         open={!!resumeCandidate}
         onOpenChange={() => setResumeCandidate(null)}
       >
-        <DialogContent className="min-w-3xl max-w-5xl w-full p-0">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle className="text-xl font-inter tracking-tight">
+        <DialogContent className={`min-w-3xl max-w-5xl w-full p-0 ${darkTheme ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}>
+          <DialogHeader className={`p-4 border-b ${darkTheme ? "border-slate-800 bg-slate-900/50" : "border-slate-200 bg-slate-50"}`}>
+            <DialogTitle className={`text-xl font-inter tracking-tight ${darkTheme ? "text-white" : "text-slate-900"}`}>
               Resume & ATS Report <LuActivity className="inline ml-2" />
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 h-[55vh] justify-items-center">
+          <div className={`grid grid-cols-2 h-[55vh] ${darkTheme ? "bg-slate-800/30" : "bg-slate-50"}`}>
             {/* Left: Resume Viewer */}
-            <div className="h-full border-r w-full">
+            <div className={`h-full border-r w-full flex flex-col items-center justify-center p-6 ${darkTheme ? "border-slate-700 bg-slate-800/20" : "border-slate-200"}`}>
               {resumeCandidate?.resumeURL ? (
-                <iframe
-                  src={resumeCandidate.resumeURL}
-                  className="w-full h-full"
-                />
+                <div className="flex flex-col items-center gap-4 text-center w-full">
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${darkTheme ? "bg-blue-500/20 text-blue-300" : "bg-blue-50 text-blue-600"}`}>
+                    <LuDock className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-2 w-full">
+                    <p className={`text-sm font-semibold ${darkTheme ? "text-slate-100" : "text-slate-900"}`}>Resume Available</p>
+                    <p className={`text-xs max-w-xs break-words mx-auto ${darkTheme ? "text-slate-400" : "text-slate-500"}`}>{resumeCandidate.resumeURL}</p>
+                  </div>
+                  <a
+                    href={resumeCandidate.resumeURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all mt-3 ${darkTheme ? "bg-blue-600 hover:bg-blue-500 text-white shadow-md" : "bg-blue-600 hover:bg-blue-500 text-white shadow-md"}`}
+                  >
+                    <LuDock className="w-4 h-4" />
+                    Open Resume
+                  </a>
+                </div>
               ) : (
-                <p className="p-4 text-gray-500 italic">No resume uploaded.</p>
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${darkTheme ? "bg-slate-700 text-slate-500" : "bg-slate-100 text-slate-400"}`}>
+                    <LuDock className="w-8 h-8" />
+                  </div>
+                  <p className={`text-sm font-medium ${darkTheme ? "text-slate-400" : "text-slate-500"}`}>No resume uploaded.</p>
+                </div>
               )}
             </div>
 
             {/* Right: ATS Report */}
-            <div className="bg-gray-100 w-full h-full p-4 overflow-y-auto">
+            <div className={`w-full h-full p-6 overflow-y-auto ${darkTheme ? "bg-slate-900/40" : "bg-white"}`}>
               {!atsReports?.[resumeCandidate?.userEmail] ? (
-                <div className="flex flex-col gap-10 items-center justify-center h-full">
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={loadingReport}
-                    className="cursor-pointer"
-                  >
-                    {loadingReport ? "Analyzing..." : "Generate Scores"}{" "}
-                    <LuActivity className="ml-2" />
-                  </Button>
+                <div className="flex flex-col gap-4 items-center justify-center h-full">
+                  <div className="space-y-3 w-full">
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={loadingReport}
+                      className={`w-full cursor-pointer font-semibold ${darkTheme ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-blue-600 hover:bg-blue-500 text-white"}`}
+                    >
+                      {loadingReport ? "Analyzing..." : "Generate Scores"}
+                      <LuActivity className="ml-2" />
+                    </Button>
+                    <a
+                      href={resumeCandidate?.resumeURL}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all border ${darkTheme ? "border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100" : "border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-900"}`}
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Resume
+                    </a>
+                  </div>
 
                   {loadingReport && <AILoadingState />}
                 </div>
               ) : (
-                <div>
-                  <h2 className="text-center font-sora text-lg font-medium">
+                <div className="space-y-4">
+                  <h2 className={`text-center font-sora text-lg font-bold ${darkTheme ? "text-white" : "text-slate-900"}`}>
                     Resume Analysis Report
                   </h2>
-                  <h3 className="text-base text-center font-semibold mt-3 font-inter">
-                    ATS Score: {atsReports[resumeCandidate.userEmail].atsScore}
-                    /100
-                  </h3>
-                  <div className="mt-3 bg-green-200/30 border border-green-500 p-3 rounded">
-                    <h4 className="font-medium mb-2 font-sora text-center">
-                      Strong Points
+                  <div className={`text-center p-4 rounded-xl font-bold text-xl ${darkTheme ? "bg-blue-500/15 border border-blue-700 text-blue-200" : "bg-blue-50 border border-blue-200 text-blue-700"}`}>
+                    ATS Score: {atsReports[resumeCandidate.userEmail].atsScore}/100
+                  </div>
+                  <div className={`p-4 rounded-xl border ${darkTheme ? "bg-emerald-500/10 border-emerald-700/50" : "bg-emerald-50 border-emerald-200"}`}>
+                    <h4 className={`font-semibold mb-3 font-sora text-center ${darkTheme ? "text-emerald-200" : "text-emerald-700"}`}>
+                      ✓ Strong Points
                     </h4>
-                    <ul className="list-disc pl-5 text-green-600 font-inter tracking-tight">
+                    <ul className={`space-y-1 font-inter text-sm ${darkTheme ? "text-emerald-100" : "text-emerald-900"}`}>
                       {atsReports[resumeCandidate.userEmail].strongPoints.map(
                         (p: string, i: number) => (
-                          <li key={i}>{p}</li>
+                          <li key={i} className="flex gap-2">
+                            <span className="text-emerald-500">•</span>
+                            <span>{p}</span>
+                          </li>
                         )
                       )}
                     </ul>
                   </div>
-                  <div className="mt-5 bg-red-200/30 border border-red-500 p-3 rounded">
-                    <h4 className="font-medium mb-2 font-sora text-center">
-                      Weak Points
+                  <div className={`p-4 rounded-xl border ${darkTheme ? "bg-red-500/10 border-red-700/50" : "bg-red-50 border-red-200"}`}>
+                    <h4 className={`font-semibold mb-3 font-sora text-center ${darkTheme ? "text-red-200" : "text-red-700"}`}>
+                      ⚠ Weak Points
                     </h4>
-                    <ul className="list-disc pl-5 text-red-600 font-inter tracking-tight">
+                    <ul className={`space-y-1 font-inter text-sm ${darkTheme ? "text-red-100" : "text-red-900"}`}>
                       {atsReports[resumeCandidate.userEmail].weakPoints.map(
                         (p: string, i: number) => (
-                          <li key={i}>{p}</li>
+                          <li key={i} className="flex gap-2">
+                            <span className="text-red-500">•</span>
+                            <span>{p}</span>
+                          </li>
                         )
                       )}
                     </ul>
