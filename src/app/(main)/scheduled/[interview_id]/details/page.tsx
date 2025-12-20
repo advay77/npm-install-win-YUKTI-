@@ -403,12 +403,12 @@ export default function InterviewDetailsPage() {
         onOpenChange={() => setSelectedCandidate(null)}
       >
         <DialogContent
-          className={`sm:max-w-[760px] ${darkTheme
+          className={`!w-[85vw] !h-[95vh] !max-w-none !max-h-none overflow-auto p-0 ${darkTheme
             ? "bg-slate-900/95 border border-slate-800 shadow-2xl"
             : "bg-white border border-slate-200 shadow-xl"}`}
         >
-          <DialogHeader>
-            <DialogTitle className={`text-2xl font-sora tracking-tight flex items-center justify-between px-4 sm:px-6 ${darkTheme ? "text-white" : "text-slate-900"}`}>
+          <DialogHeader className="px-6 py-4 border-b border-transparent">
+            <DialogTitle className={`text-2xl font-sora tracking-tight flex items-center justify-between pr-10 ${darkTheme ? "text-white" : "text-slate-900"}`}>
               <div className="flex items-center gap-2">
                 <span className={`w-10 h-10 rounded-lg flex items-center justify-center ${darkTheme ? "bg-blue-500/15 text-blue-200" : "bg-blue-50 text-blue-600"}`}>
                   <UserCircle2 className="h-6 w-6" />
@@ -430,7 +430,7 @@ export default function InterviewDetailsPage() {
             </DialogTitle>
           </DialogHeader>
           {selectedCandidate && (
-            <div className="mt-4 space-y-6">
+            <div className="px-6 pb-6 pt-2 space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <p className={`font-semibold capitalize text-lg font-inter ${darkTheme ? "text-white" : "text-slate-900"}`}>
