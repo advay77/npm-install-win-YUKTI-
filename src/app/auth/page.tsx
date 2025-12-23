@@ -49,9 +49,10 @@ const Login = () => {
       {/* Content */}
       {/* animate-moving-gradient */}
       <div className="flex flex-col items-center justify-center relative z-10 ">
-        <div className="text-sm px-6 text-gray-800 font-medium flex items-center justify-center gap-3 py-1 border-2 border-yellow-500 rounded-full mb-20 ">
-          Try it for Free{" "}
-          <BsStars className="inline-flex text-yellow-400 text-xl" />
+        <div className="inline-flex items-center justify-center gap-2.5 px-5 py-2.5 border-2 border-yellow-400 rounded-full mb-20 bg-gradient-to-r from-yellow-50/80 to-amber-50/80 hover:from-yellow-100 hover:to-amber-100 transition-all duration-300 shadow-lg hover:shadow-xl">
+          <BsStars className="text-yellow-500 text-lg animate-pulse" />
+          <span className="text-sm font-semibold text-gray-900 font-inter">Try it for Free</span>
+          <BsStars className="text-yellow-500 text-lg animate-pulse" />
         </div>
 
         <h1 className="font-extrabold text-5xl md:text-6xl font-sora tracking-tight mb-3">
@@ -79,9 +80,15 @@ const Login = () => {
           </div>
         </div>
 
-        <p className="text-gray-900 max-[650px]:mt-14 mt-8 mb-10 text-2xl font-inter font-semibold">
-          Get Started Now
-        </p>
+        <div className="flex flex-col items-center justify-center gap-2 mb-12">
+          <p className="text-gray-900 max-[650px]:mt-14 mt-10 text-4xl font-sora font-bold tracking-tight">
+            Get Started Now
+          </p>
+          <div className="h-1 w-20 bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400" />
+          <p className="text-gray-500 text-sm font-inter max-w-sm text-center">
+            Join thousands of recruiters using INTERVIEWX to streamline hiring
+          </p>
+        </div>
 
         <div className="flex items-center justify-center w-full max-w-lg px-4">
           <Button
