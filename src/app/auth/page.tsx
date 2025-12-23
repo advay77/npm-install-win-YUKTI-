@@ -79,38 +79,22 @@ const Login = () => {
           </div>
         </div>
 
-        <p className="text-gray-800 max-[650px]:mt-14 mt-6 mb-5 text-xl font-inter font-medium">
-          Continue To Get Started
+        <p className="text-gray-900 max-[650px]:mt-14 mt-8 mb-10 text-2xl font-inter font-semibold">
+          Get Started Now
         </p>
 
-        <div className="flex max-[650px]:flex-col items-center justify-center gap-5">
+        <div className="flex items-center justify-center w-full max-w-lg px-4">
           <Button
             onClick={() => handleLogin("google")}
             variant="outline"
-            className="py-5 shadow-md cursor-pointer"
+            className="w-full py-7 shadow-2xl hover:shadow-blue-200/50 transition-all duration-300 cursor-pointer border-2 border-blue-300 bg-gradient-to-r from-blue-50 via-white to-blue-50 hover:from-blue-100 hover:via-blue-50 hover:to-blue-100 hover:scale-[1.01] active:scale-[0.99] rounded-none"
           >
-            <span className="flex items-center justify-between gap-5 font-inter text-black tracking-tight">
-              <Image src="/google.png" alt="Google" width={25} height={25} />
-              Continue with Google
-            </span>
-          </Button>
-
-          <Button
-            onClick={() => handleLogin("discord")}
-            variant="outline"
-            className="py-5 shadow-md cursor-pointer"
-          >
-            <span className="flex items-center justify-between gap-5 font-inter text-black tracking-tight">
-              <Image src="/discord.png" alt="Google" width={25} height={25} />
-              Continue with Discord
+            <span className="flex items-center justify-center gap-3 font-inter text-gray-900 tracking-tight font-bold text-lg">
+              <Image src="/google.png" alt="Google" width={32} height={32} />
+              <span>Sign in with Google</span>
             </span>
           </Button>
         </div>
-
-        <p className="text-gray-600 mt-12 text-sm font-light cursor-pointer font-inter ">
-          You are a Candidate ? <span onClick={() => router.push("/candidate-auth")} className="text-blue-600 underline underline-offset-4 cursor-pointer">Click Here !</span>
-        </p>
-
       </div>
     </div>
   );
