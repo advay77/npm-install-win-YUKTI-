@@ -194,8 +194,9 @@ const DashboardTopNav = () => {
                 <LuSun className="text-yellow-500" /> Theme
               </DropdownMenuItem>
               <DropdownMenuItem
+                onClick={() => router.push('/subscription')}
                 className={clsx(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all",
+                  "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all cursor-pointer",
                   darkTheme
                     ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
                     : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"

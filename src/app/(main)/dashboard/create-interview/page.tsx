@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { LuArrowLeft } from "react-icons/lu";
 import { useUserData } from "@/context/UserDetailContext";
 import { useTheme } from "@/context/ThemeProvider";
@@ -11,10 +11,25 @@ import InterviewFormContainer from "@/components/InterviewFormContainer";
 import { toast } from "sonner";
 import InterviewQuestions from "@/components/InterviewQuestions";
 import InterviewLink from "@/components/InterviewLink";
+
 const CreateInterview = () => {
   const { darkTheme } = useTheme();
   const { users } = useUserData();
   const router = useRouter();
+
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const userEmail = users?.[0]?.email;
+  const remainingCredits = users?.[0]?.remainingCredits ?? 0;
+  const isAdmin = userEmail === adminEmail;
+
+  useEffect(() => {
+    // Redirect if not admin and no credits
+    if (!isAdmin && remainingCredits <= 0) {
+      toast.error("No credits remaining. Please purchase credits to create interviews.");
+      router.push("/dashboard");
+    }
+  }, [isAdmin, remainingCredits, router]);
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     jobTitle: "",

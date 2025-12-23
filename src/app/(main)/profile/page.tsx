@@ -88,6 +88,9 @@ const ProfilePage = () => {
                         : "bg-white border-blue-100 shadow-lg"
                         } overflow-hidden`}
                 >
+                    {/* Decorative top line */}
+                    <div className="h-1.5 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700" />
+
                     <CardHeader className="pb-4">
                         <div className="flex items-center gap-6">
                             <div className="relative">

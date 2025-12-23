@@ -4,9 +4,32 @@ import { LuVideo, LuCircleFadingPlus, LuSearch, LuMailPlus } from "react-icons/l
 import { LuStar, LuBookText, LuMessageSquareMore } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/ThemeProvider";
+import { useUserData } from "@/context/UserDetailContext";
 import Link from "next/link";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
 const DashBoardOptions = () => {
   const { darkTheme } = useTheme();
+  const { users } = useUserData();
+  const router = useRouter();
+
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const userEmail = users?.[0]?.email;
+  const remainingCredits = users?.[0]?.remainingCredits ?? 0;
+  const isAdmin = userEmail === adminEmail;
+  const hasCredits = remainingCredits > 0 || isAdmin;
+
+  const handleProClick = (path: string) => {
+    if (!hasCredits && !isAdmin) {
+      toast.error("No credits remaining. Please purchase credits to continue.", {
+        duration: 3000,
+      });
+      return;
+    }
+    router.push(path);
+  };
+
   return (
     <div className="grid grid-cols-1 min-[800px]:grid-cols-2 min-[1200px]:grid-cols-3 gap-6 w-full my-8 max-w-[1400px] mx-auto">
       {/* First Card - Create Interview */}
@@ -32,13 +55,16 @@ const DashBoardOptions = () => {
           <p className={`text-sm font-medium tracking-tight font-inter leading-relaxed ${darkTheme ? "text-slate-300" : "text-slate-600"}`}>
             Create AI interviews for your candidates and get interview results, insights and more in minutes.
           </p>
-          <Link href="/dashboard/create-interview">
-            <Button
-              className="py-2.5 px-5 text-sm tracking-tight cursor-pointer font-inter font-semibold w-full mt-5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
-            >
-              Create Interview <LuCircleFadingPlus className="text-lg" />
-            </Button>
-          </Link>
+          <Button
+            onClick={() => handleProClick("/dashboard/create-interview")}
+            disabled={!hasCredits && !isAdmin}
+            className={`py-2.5 px-5 text-sm tracking-tight cursor-pointer font-inter font-semibold w-full mt-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 ${hasCredits || isAdmin
+              ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              : "bg-gradient-to-r from-slate-400 to-slate-500 text-white cursor-not-allowed opacity-60"
+              }`}
+          >
+            Create Interview <LuCircleFadingPlus className="text-lg" />
+          </Button>
         </div>
       </div>
       {/* Second Card - Check Resume */}
@@ -64,13 +90,16 @@ const DashBoardOptions = () => {
           <p className={`text-sm font-medium tracking-tight font-inter leading-relaxed ${darkTheme ? "text-slate-300" : "text-slate-600"}`}>
             See all the resume submitted by candidates during interviews in one place.
           </p>
-          <Link href="/scheduled">
-            <Button
-              className="py-2.5 px-5 text-sm tracking-tight font-inter font-semibold w-full mt-5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
-            >
-              Check Resume <LuSearch className="text-lg" />
-            </Button>
-          </Link>
+          <Button
+            onClick={() => handleProClick("/scheduled")}
+            disabled={!hasCredits && !isAdmin}
+            className={`py-2.5 px-5 text-sm tracking-tight font-inter font-semibold w-full mt-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 ${hasCredits || isAdmin
+                ? "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
+                : "bg-gradient-to-r from-slate-400 to-slate-500 text-white cursor-not-allowed opacity-60"
+              }`}
+          >
+            Check Resume <LuSearch className="text-lg" />
+          </Button>
         </div>
       </div>
       {/* Third Card - Send Mails */}
