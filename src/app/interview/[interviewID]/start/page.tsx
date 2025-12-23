@@ -847,7 +847,7 @@ Ensure the interview remains focused on React
               <DialogDescription className="text-center text-base font-medium text-slate-100">
                 {(interviewInfo?.userName ?? "Candidate")}, your interview has ended successfully
               </DialogDescription>
-              <DialogClose className="absolute right-4 top-4 rounded-md text-white/80 hover:text-white">
+              <DialogClose className="absolute right-4 top-4 rounded-md text-[#005eff] transition-colors duration-150 hover:text-[#0047cc]">
                 <LuX className="h-5 w-5" />
               </DialogClose>
             </DialogHeader>
