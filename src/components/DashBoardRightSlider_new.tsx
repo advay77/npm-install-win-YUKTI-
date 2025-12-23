@@ -103,19 +103,19 @@ export function SheetDemo() {
                     <Stars className="text-3xl text-white animate-pulse group-hover:animate-bounce" />
                 </div>
             </SheetTrigger>
-            <SheetContent className={`${darkTheme ? "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950" : "bg-gradient-to-b from-white via-blue-50/30 to-white"} py-8 px-5 border-l ${darkTheme ? "border-slate-700/50 shadow-2xl shadow-slate-900/50" : "border-blue-100/50 shadow-xl"}`}>
+            <SheetContent className={`${darkTheme ? "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950" : "bg-gradient-to-b from-white via-blue-50/30 to-white"} py-6 px-5 border-l ${darkTheme ? "border-slate-700/50 shadow-2xl shadow-slate-900/50" : "border-blue-100/50 shadow-xl"} flex flex-col max-h-screen overflow-hidden`}>
                 <SheetHeader>
                     <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700`} />
                     <SheetTitle className={`font-extrabold text-2xl font-sora tracking-tight flex gap-3 items-center ${darkTheme ? "text-white" : "text-slate-900"}`}>
                         <span>INTERVIEWX AI</span>
                         <Stars className={`text-2xl ${darkTheme ? "text-blue-400 animate-spin" : "text-blue-600 animate-bounce"}`} />
                     </SheetTitle>
-                    <SheetDescription className={`text-sm font-inter tracking-wide mt-4 px-0 leading-relaxed ${darkTheme ? "text-slate-400" : "text-slate-600"}`}>
+                    <SheetDescription className={`text-sm font-inter tracking-wide mt-3 px-0 leading-relaxed ${darkTheme ? "text-slate-400" : "text-slate-600"}`}>
                         Your intelligent assistant for interview management, candidate communication, and workflow optimization.
                     </SheetDescription>
                 </SheetHeader>
                 {/*---------------- AI MESSAGES DIPLAY--------------------- */}
-                <div className="h-full flex flex-col mt-8">
+                <div className="flex-1 flex flex-col mt-6 min-h-0 overflow-hidden">
                     {messages.length == 0 ? (
                         <div className="space-y-2">
                             <h3 className={`text-sm font-semibold tracking-tight mb-4 ${darkTheme ? "text-slate-300" : "text-slate-700"}`}>Quick Actions</h3>
@@ -193,10 +193,10 @@ export function SheetDemo() {
                 </div>
 
                 {/* TEXTAREA TO SEND ------------ */}
-                <SheetFooter className="shrink-0 mt-8 pt-4 border-t" style={{ borderTopColor: darkTheme ? "rgba(51, 65, 85, 0.3)" : "rgba(191, 219, 254, 0.3)" }}>
-                    <div className="w-full">
-                        <Label className={`font-inter text-sm tracking-tight font-semibold mb-3 block ${darkTheme ? "text-slate-200" : "text-slate-800"}`}>
-                            Send a Message
+                <SheetFooter className="shrink-0 mt-4 pt-3 border-t" style={{ borderTopColor: darkTheme ? "rgba(51, 65, 85, 0.3)" : "rgba(191, 219, 254, 0.3)" }}>
+                    <div className="w-full flex flex-col gap-2">
+                        <Label className={`font-inter text-xs tracking-tight font-semibold ${darkTheme ? "text-slate-200" : "text-slate-800"}`}>
+                            Message
                         </Label>
                         <div className="relative">
                             <Textarea
@@ -204,22 +204,22 @@ export function SheetDemo() {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                className={`font-inter text-sm tracking-tight font-medium h-24 resize-none rounded-xl border-2 transition-all focus:outline-none ${darkTheme
+                                className={`font-inter text-xs tracking-tight font-medium h-14 resize-none rounded-lg border-2 transition-all focus:outline-none p-2 ${darkTheme
                                     ? "bg-slate-800/60 text-white placeholder-slate-500 border-slate-700/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 backdrop-blur-sm"
                                     : "bg-white/60 text-slate-900 placeholder-slate-400 border-blue-200/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 backdrop-blur-sm"
                                     }`}
                             />
                             <Button
-                                className={`absolute right-3 bottom-3 rounded-lg transition-all active:scale-95 flex items-center justify-center w-10 h-10 p-0 ${darkTheme
+                                className={`absolute right-2 bottom-2 rounded-md transition-all active:scale-95 flex items-center justify-center w-8 h-8 p-0 ${darkTheme
                                     ? "bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl"
                                     : "bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl"
                                     }`}
                                 onClick={sendMessage}
                             >
-                                <LuSend className="text-white" size={20} />
+                                <LuSend className="text-white" size={16} />
                             </Button>
                         </div>
-                        <p className={`text-xs mt-2 ${darkTheme ? "text-slate-500" : "text-slate-500"}`}>Press Enter + Shift for new line</p>
+                        <p className={`text-xs ${darkTheme ? "text-slate-600" : "text-slate-400"}`}>Shift + Enter = new line</p>
                     </div>
                 </SheetFooter>
             </SheetContent>
