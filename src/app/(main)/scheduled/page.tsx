@@ -363,16 +363,6 @@ const ScheduledInterview = () => {
             })}
           </div>
         )}
-
-        {/* <div
-        className={`grid ${
-          view === "grid" ? "grid-cols-3" : "grid-cols-1"
-        } border-dashed border-blue-600 p-4 rounded-md bg-white`}
-      >
-        <div className="flex w-full h-full items-center justify-center">
-          hello
-        </div>
-      </div> */}
       </div>
     </div>
   );
