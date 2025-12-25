@@ -45,10 +45,11 @@ Job Title: {jobTitle}
 Job Description: {jobDescription}
 Interview Duration: {interviewDuration}
 Interview Type: {interviewType}
+Target Question Count: {targetCount}
 
 Your task:
 - Analyze the job description to identify the key responsibilities, required skills, and expected experience.
-- Generate questions that can be all covered in {interviewDuration}-minute interview. Be time-aware.
+- Generate questions that can be covered in {interviewDuration}-minute interview and produce EXACTLY {targetCount} questions.
 - Ensure ALL questions are ONLY of the types specified in {interviewType} (e.g., {interviewType}). Do NOT include questions of any other type.
 - Ensure the questions match the tone and structure of a real-life {interviewType} interview.
 - Return a JSON array containing a single object with the key 'interviewQuestions' containing an array of objects with 'question' and 'type' fields. Do not include markdown, explanations, or extra text.
@@ -57,9 +58,6 @@ Your task:
 `;
 
 const promptTemplate = PromptTemplate.fromTemplate(promptText);
-
-// NOTE: Create the LLM and chain inside the request handler so we can
-// validate env keys at runtime and return actionable errors to the client.
 
 export async function POST(request: Request) {
   try {
@@ -78,17 +76,27 @@ export async function POST(request: Request) {
       ? interviewType.join(", ")
       : interviewType;
 
+    // Derive target question count from duration for predictability
+    const durationMin = Number(interviewDuration);
+    const targetCount = Number.isFinite(durationMin)
+      ? (durationMin <= 12
+        ? 8
+        : durationMin <= 20
+          ? 12
+          : durationMin <= 35
+            ? 16
+            : 20)
+      : 12;
+
     const input = {
       jobTitle,
       jobDescription,
       interviewDuration,
       interviewType: readableInterviewType,
+      targetCount,
       format_instructions: parser.getFormatInstructions(),
     };
 
-    // Validate API key and initialize LLM dynamically so we can provide
-    // actionable errors if the key looks like the wrong provider (eg. a
-    // Grok `xai-...` key placed into `GROQ_API_KEY`).
     const groqApiKey = process.env.GROQ_API_KEY;
     if (!groqApiKey) {
       console.error('[ai-model] GROQ_API_KEY is missing');
