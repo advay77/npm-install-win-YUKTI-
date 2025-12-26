@@ -198,7 +198,7 @@ export function AppSidebar() {
         {/* Credits Card */}
         <Link href="/subscription" className="block mb-3">
           <div className={clsx(
-            "group relative w-full rounded-xl p-4 transition-all duration-300 cursor-pointer overflow-hidden",
+            "group relative w-full rounded-lg p-3 transition-all duration-300 cursor-pointer overflow-hidden",
             darkTheme
               ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 hover:from-gray-800 hover:to-gray-800 border border-gray-700/50 hover:border-blue-500/30"
               : "bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 hover:from-blue-100 hover:to-blue-50 border border-blue-200/50 hover:border-blue-400/50"
@@ -210,7 +210,7 @@ export function AppSidebar() {
             )}></div>
 
             {/* Credit card image - positioned on right */}
-            <div className="absolute -top-3 -right-3 w-28 h-28 opacity-40 group-hover:opacity-60 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+            <div className="absolute -top-2 -right-2 w-24 h-24 opacity-40 group-hover:opacity-60 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Image
                 src="/element2.png"
                 alt="credits"
@@ -222,14 +222,14 @@ export function AppSidebar() {
 
             <div className="relative z-10">
               {/* Credits display */}
-              <div className="mb-3">
+              <div className="mb-2.5">
                 <div className="flex items-center gap-2 mb-1">
                   <div className={clsx(
                     "w-2 h-2 rounded-full",
                     darkTheme ? "bg-blue-500" : "bg-blue-600"
                   )}></div>
                   <span className={clsx(
-                    "text-[10px] uppercase tracking-wider font-inter font-bold",
+                    "text-[10px] uppercase tracking-wider font-inter font-semibold",
                     darkTheme ? "text-gray-400" : "text-gray-500"
                   )}>
                     Available Credits
@@ -237,7 +237,7 @@ export function AppSidebar() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className={clsx(
-                    "font-inter font-black text-4xl tracking-tight",
+                    "font-inter font-black text-3xl tracking-tight",
                     darkTheme
                       ? "bg-gradient-to-br from-blue-400 via-blue-300 to-indigo-400 bg-clip-text text-transparent"
                       : "bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 bg-clip-text text-transparent"
@@ -245,7 +245,7 @@ export function AppSidebar() {
                     {remainingCredits}
                   </span>
                   <span className={clsx(
-                    "font-inter font-medium text-sm",
+                    "font-inter font-medium text-xs",
                     darkTheme ? "text-gray-500" : "text-gray-600"
                   )}>
                     / {totalCredits}
@@ -254,7 +254,7 @@ export function AppSidebar() {
               </div>
 
               {/* Progress bar */}
-              <div className="mb-3">
+              <div className="mb-2.5">
                 <div className={clsx(
                   "relative h-1.5 rounded-full overflow-hidden",
                   darkTheme ? "bg-gray-800" : "bg-blue-100"
@@ -272,7 +272,7 @@ export function AppSidebar() {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mt-1.5">
+                <div className="flex items-center justify-between mt-1">
                   <span className={clsx(
                     "text-[10px] font-inter font-medium",
                     darkTheme ? "text-gray-500" : "text-gray-600"
@@ -290,7 +290,7 @@ export function AppSidebar() {
 
               {/* CTA */}
               <div className={clsx(
-                "flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300",
+                "flex items-center justify-between py-1.5 px-3 rounded-lg transition-all duration-300",
                 darkTheme
                   ? "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 group-hover:from-blue-500/20 group-hover:to-indigo-500/20"
                   : "bg-gradient-to-r from-blue-500/10 to-blue-600/10 group-hover:from-blue-500/20 group-hover:to-blue-600/20"
