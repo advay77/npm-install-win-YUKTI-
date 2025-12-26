@@ -164,25 +164,25 @@ const DashboardTopNav = () => {
                 )}
                 align="start"
               >
-              <DropdownMenuLabel
-                className={clsx(
-                  "font-sora italic font-bold text-center tracking-[0.08em] w-full py-3 rounded-none uppercase",
-                  darkTheme
-                    ? "bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-700 text-white shadow-sm"
-                    : "bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white"
-                )}
-              >
-                HEY, {users?.[0].name}
-              </DropdownMenuLabel>
-              <p
-                className={clsx(
-                  "text-[11px] font-semibold text-center mt-2 mb-1 tracking-wide uppercase",
-                  darkTheme ? "text-slate-300" : "text-slate-600"
-                )}
-              >
-                Developed by SYED MOHAMMAD AQUIB
-              </p>
-              <DropdownMenuSeparator />
+                <DropdownMenuLabel
+                  className={clsx(
+                    "font-sora italic font-bold text-center tracking-[0.08em] w-full py-3 rounded-none uppercase",
+                    darkTheme
+                      ? "bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-700 text-white shadow-sm"
+                      : "bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white"
+                  )}
+                >
+                  HEY, {users?.[0].name}
+                </DropdownMenuLabel>
+                <p
+                  className={clsx(
+                    "text-[11px] font-semibold text-center mt-2 mb-1 tracking-wide uppercase",
+                    darkTheme ? "text-slate-300" : "text-slate-600"
+                  )}
+                >
+                  Developed by SYED MOHAMMAD AQUIB
+                </p>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => router.push('/profile')}
                   className={clsx(
