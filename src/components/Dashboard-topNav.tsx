@@ -1,7 +1,7 @@
 "use client";
 import { useTheme } from "@/context/ThemeProvider";
 import clsx from "clsx";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LuBell, LuSearch, LuChevronDown, LuX } from "react-icons/lu";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/SideBar";
@@ -28,6 +28,11 @@ const DashboardTopNav = () => {
   const { users, setUsers } = useUserData();
   const [searchValue, setSearchValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,27 +144,26 @@ const DashboardTopNav = () => {
           <p className="flex items-center gap-1 font-sora text-sm text-gray-400">
             EN <LuChevronDown />
           </p>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="cursor-pointer focus:outline-none">
-              {/* <div className="cursor-pointer"> */}
-              <Image
-                src={users?.[0].picture || "/avatar.png"}
-                width={50}
-                height={50}
-                className="rounded-full"
-                alt="avatar"
-              />
-              {/* </div> */}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className={clsx(
-                "w-72 mr-5 font-inter text-[15px] space-y-1 rounded-none p-3 shadow-xl border",
-                darkTheme
-                  ? "bg-[#0c1024] text-white border-slate-800/80 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
-                  : "bg-white text-slate-900 border-blue-100"
-              )}
-              align="start"
-            >
+          {mounted && (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="cursor-pointer focus:outline-none">
+                <Image
+                  src={users?.[0].picture || "/avatar.png"}
+                  width={50}
+                  height={50}
+                  className="rounded-full"
+                  alt="avatar"
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className={clsx(
+                  "w-72 mr-5 font-inter text-[15px] space-y-1 rounded-none p-3 shadow-xl border",
+                  darkTheme
+                    ? "bg-[#0c1024] text-white border-slate-800/80 shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+                    : "bg-white text-slate-900 border-blue-100"
+                )}
+                align="start"
+              >
               <DropdownMenuLabel
                 className={clsx(
                   "font-sora italic font-bold text-center tracking-[0.08em] w-full py-3 rounded-none uppercase",
@@ -179,47 +183,48 @@ const DashboardTopNav = () => {
                 Developed by SYED MOHAMMAD AQUIB
               </p>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => router.push('/profile')}
-                className={clsx(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all cursor-pointer",
-                  darkTheme
-                    ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
-                    : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
-                )}
-              >
-                <LuUser className="text-blue-600" /> Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={toggleTheme}
-                className={clsx(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all",
-                  darkTheme
-                    ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
-                    : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
-                )}
-              >
-                <LuSun className="text-yellow-500" /> Theme
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => router.push('/subscription')}
-                className={clsx(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all cursor-pointer",
-                  darkTheme
-                    ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
-                    : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
-                )}
-              >
-                <LuWallet className="text-purple-600" /> Subscription
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="mt-1 flex items-center justify-center gap-3 rounded-none cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-700 text-white hover:text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] focus:text-white"
-              >
-                <LuLogOut className="text-white hover:text-white" /> Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  onClick={() => router.push('/profile')}
+                  className={clsx(
+                    "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all cursor-pointer",
+                    darkTheme
+                      ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
+                      : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
+                  )}
+                >
+                  <LuUser className="text-blue-600" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={toggleTheme}
+                  className={clsx(
+                    "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all",
+                    darkTheme
+                      ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
+                      : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
+                  )}
+                >
+                  <LuSun className="text-yellow-500" /> Theme
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push('/subscription')}
+                  className={clsx(
+                    "flex items-center gap-2 px-4 py-2.5 rounded-none transition-all cursor-pointer",
+                    darkTheme
+                      ? "hover:bg-slate-800 data-[highlighted]:bg-slate-800 data-[highlighted]:text-white"
+                      : "hover:bg-blue-50 data-[highlighted]:bg-blue-50 data-[highlighted]:text-slate-900"
+                  )}
+                >
+                  <LuWallet className="text-purple-600" /> Subscription
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="mt-1 flex items-center justify-center gap-3 rounded-none cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-700 text-white hover:text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] focus:text-white"
+                >
+                  <LuLogOut className="text-white hover:text-white" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
