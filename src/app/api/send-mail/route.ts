@@ -16,6 +16,7 @@ export async function POST(req: Request) {
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE;
 
       if (!supabaseUrl || !serviceKey) {
+        console.error("Missing Supabase credentials");
         return NextResponse.json(
           { error: "Supabase service key or URL not configured" },
           { status: 500 }
@@ -27,22 +28,28 @@ export async function POST(req: Request) {
       // Get user credits
       const { data: userData, error: userError } = await supabaseAdmin
         .from("users")
-        .select("remainingcredits, remaining_credits, remainingCredits")
+        .select("remainingcredits")
         .eq("email", userEmail)
-        .maybeSingle();
+        .single();
 
-      if (userError || !userData) {
+      if (userError) {
+        console.error("🔴 Credit verification error:", userError, "for email:", userEmail);
         return NextResponse.json(
-          { error: "Unable to verify credits" },
+          { error: "Unable to verify credits - " + userError.message },
           { status: 500 }
         );
       }
 
-      const remainingCredits =
-        (userData as any)?.remainingCredits ??
-        (userData as any)?.remaining_credits ??
-        (userData as any)?.remainingcredits ??
-        0;
+      if (!userData) {
+        console.error("🔴 No user data found for email:", userEmail);
+        return NextResponse.json(
+          { error: "User not found in database" },
+          { status: 500 }
+        );
+      }
+
+      const remainingCredits = (userData as any)?.remainingcredits ?? 0;
+      console.log("✅ User credits verified:", remainingCredits, "for email:", userEmail);
 
       if (remainingCredits <= 0) {
         return NextResponse.json(
