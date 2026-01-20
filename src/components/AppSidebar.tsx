@@ -68,20 +68,15 @@ export function AppSidebar() {
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600"></div>
 
         <div className="flex items-center gap-3.5 group cursor-pointer">
-          <div
-            className={clsx(
-              "relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl font-sora shadow-lg transition-all duration-500 group-hover:shadow-2xl group-hover:scale-110 group-hover:rotate-3",
-              darkTheme
-                ? "bg-gradient-to-br from-white via-gray-50 to-gray-100 text-blue-600"
-                : "bg-gradient-to-br from-blue-600 via-blue-600 to-blue-800 text-white"
-            )}
-          >
-            <span className="relative z-10">I</span>
-            {/* Glow effect */}
-            <div className={clsx(
-              "absolute inset-0 rounded-2xl blur-md opacity-50 group-hover:opacity-70 transition-opacity duration-500",
-              darkTheme ? "bg-blue-400" : "bg-blue-500"
-            )}></div>
+          <div className="relative w-12 h-12">
+            <Image
+              src="/logo.png"
+              alt="INTERVIEWX logo"
+              fill
+              sizes="48px"
+              className="object-contain"
+              priority
+            />
           </div>
           <div className="flex-1">
             <h2
