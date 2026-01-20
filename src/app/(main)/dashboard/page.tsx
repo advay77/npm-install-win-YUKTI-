@@ -25,15 +25,6 @@ const Page = () => {
     setShowRecentInterviewsModal(true);
   };
 
-  // Lock global scroll while on dashboard
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
-
   return (
     <div
       className={`w-full h-screen overflow-y-auto overflow-x-hidden ${!darkTheme
