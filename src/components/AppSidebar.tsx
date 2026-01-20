@@ -61,7 +61,6 @@ export function AppSidebar() {
 
   const totalCredits = users?.[0].credits || 0;
   const progress = totalCredits > 0 ? ((remainingCredits || 0) / totalCredits) * 100 : 0;
-  // console.log("USERS DATA IN APPSIDEBAR", users);
   return (
     <Sidebar>
       <SidebarHeader className="py-5 px-4 relative">
