@@ -108,7 +108,7 @@ const DashboardTopNav = () => {
             className={clsx(
               "flex-1 bg-transparent shadow-none border-none focus-visible:ring-0 h-auto p-0 placeholder:transition-colors font-medium text-[15px]",
               darkTheme
-                ? "text-white placeholder:text-slate-400"
+                ? "text-white placeholder:text-slate-400 !bg-transparent"
                 : "text-slate-800 placeholder:text-slate-400"
             )}
           />
