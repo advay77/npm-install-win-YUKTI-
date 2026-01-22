@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from "next/server";
-import { ChatGroq } from "@langchain/groq";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StructuredOutputParser } from "@langchain/core/output_parsers";
 import { z } from "zod";
@@ -40,20 +40,12 @@ Your task:
 - Provide a concise summary in 3 lines.
 - Provide a recommendation (Yes/No) and a recommendationMessage.
 
-Return ONLY JSON in this format:
+Return ONLY raw JSON. Do NOT include markdown code blocks (like \`\`\`json), explanations, or extra text.
+
 {format_instructions}
 `);
 
 // --- LLM ---
-const llm = new ChatGroq({
-  model: "meta-llama/llama-4-scout-17b-16e-instruct",
-  temperature: 0.3,
-  maxTokens: 600,
-});
-
-// --- Chain ---
-const chain = promptTemplate.pipe(llm).pipe(parser);
-
 export async function POST(request: Request) {
   try {
     const body: FeedbackRequest = await request.json();
@@ -66,9 +58,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Format conversation into readable string for the LLM
+    const llm = new ChatGoogleGenerativeAI({
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_GENAI_KEY,
+      model: "gemini-1.5-flash",
+      temperature: 0.3,
+      maxOutputTokens: 1500,
+    });
+
     const conversationString = conversation
-      .map((m) => `${m.type === "user" ? "User" : "Assistant"}: ${m.content}`)
+      .map((m) => `${m.type === "user" ? "User" : "Assistant"}: ${m.content} `)
       .join("\n");
 
     const input = {
@@ -76,7 +74,40 @@ export async function POST(request: Request) {
       format_instructions: parser.getFormatInstructions(),
     };
 
-    const result = await chain.invoke(input) as z.infer<typeof feedbackSchema>;
+    // Invoke LLM directly
+    const rawResponse = await llm.invoke(await promptTemplate.format(input));
+    const rawText = typeof rawResponse.content === 'string'
+      ? rawResponse.content
+      : JSON.stringify(rawResponse.content);
+
+    // Clean JSON using Regex
+    let cleanedText = rawText.trim();
+    const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      cleanedText = jsonMatch[1].trim();
+    } else {
+      const startIdx = cleanedText.indexOf('{');
+      const endIdx = cleanedText.lastIndexOf('}');
+      if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        cleanedText = cleanedText.substring(startIdx, endIdx + 1);
+      }
+    }
+
+    let result: z.infer<typeof feedbackSchema>;
+    try {
+      result = JSON.parse(cleanedText);
+    } catch (parseErr) {
+      console.error('Manual JSON parse failed:', parseErr);
+      try {
+        result = await parser.parse(cleanedText) as z.infer<typeof feedbackSchema>;
+      } catch (parserErr) {
+        console.error('All parsing failed. Raw response:', rawText);
+        return NextResponse.json(
+          { isError: true, error: "AI returned invalid feedback format. Please try again." },
+          { status: 502 }
+        );
+      }
+    }
 
     // --- Normalize response (so frontend never breaks) ---
     const finalResult = {

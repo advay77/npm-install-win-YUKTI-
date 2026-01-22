@@ -80,6 +80,11 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
   const [newType, setNewType] =
     useState<InterviewQuestion["type"]>("Technical");
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (formData) {
@@ -137,7 +142,7 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
     }
 
     // Give unlimited credits for the owner account
-    const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "syedmohammadaquib12@gmail.com";
+    const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "advayanand88@gmail.com";
     const isAdmin = userEmail === ADMIN_EMAIL;
 
     // insert interview
@@ -304,23 +309,25 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
                     className={`mt-2 ${darkTheme ? "border-slate-600 bg-slate-700 text-white placeholder:text-slate-400" : ""}`}
                   />
 
-                  <Select
-                    value={newType}
-                    onValueChange={(value) =>
-                      setNewType(value as InterviewQuestion["type"])
-                    }
-                  >
-                    <SelectTrigger className={`mt-4 ${darkTheme ? "border-slate-600 bg-slate-700 text-white" : ""}`}>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Technical">Technical</SelectItem>
-                      <SelectItem value="Behavioral">Behavioral</SelectItem>
-                      <SelectItem value="Problem Solving">Problem Solving</SelectItem>
-                      <SelectItem value="Leadership">Leadership</SelectItem>
-                      <SelectItem value="Experience">Experience</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {mounted && (
+                    <Select
+                      value={newType}
+                      onValueChange={(value) =>
+                        setNewType(value as InterviewQuestion["type"])
+                      }
+                    >
+                      <SelectTrigger className={`mt-4 ${darkTheme ? "border-slate-600 bg-slate-700 text-white" : ""}`}>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Technical">Technical</SelectItem>
+                        <SelectItem value="Behavioral">Behavioral</SelectItem>
+                        <SelectItem value="Problem Solving">Problem Solving</SelectItem>
+                        <SelectItem value="Leadership">Leadership</SelectItem>
+                        <SelectItem value="Experience">Experience</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
 
                   <DialogFooter className="mt-4">
                     <Button className={`text-white ${darkTheme ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" : "bg-sky-600 hover:bg-sky-500"}`} onClick={handleAddQuestion}>
