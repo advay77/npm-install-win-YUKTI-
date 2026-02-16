@@ -46,10 +46,10 @@ interface InterviewDetail {
     data: {
       feedback: {
         rating: {
-          technicalSkills?: number;
-          communication?: number;
-          problemSolving?: number;
-          experience?: number;
+          relevance?: number;
+          technicalDepth?: number;
+          clarity?: number;
+          communicationQuality?: number;
         };
         summary: string;
         recommendation?: string;
@@ -127,12 +127,8 @@ const CandidateScoresList = ({ selectedJobRole, darkTheme, users }: {
         details.forEach((detail: any) => {
           if (detail.feedback?.data?.feedback?.rating) {
             const rating = detail.feedback.data.feedback.rating;
-            const avgScore = (
-              (rating.technicalSkills || 0) + 
-              (rating.communication || 0) + 
-              (rating.problemSolving || 0) + 
-              (rating.experience || 0)
-            ) / 4;
+            const sum = (rating.relevance || 0) + (rating.technicalDepth || 0) + (rating.clarity || 0) + (rating.communicationQuality || 0);
+            const avgScore = (sum / 20) * 100;
             
             let category = '';
             let categoryColor = '';
@@ -154,10 +150,10 @@ const CandidateScoresList = ({ selectedJobRole, darkTheme, users }: {
               score: Math.round(avgScore),
               category,
               categoryColor,
-              technical: rating.technicalSkills || 0,
-              communication: rating.communication || 0,
-              problemSolving: rating.problemSolving || 0,
-              experience: rating.experience || 0,
+              relevance: rating.relevance || 0,
+              technicalDepth: rating.technicalDepth || 0,
+              clarity: rating.clarity || 0,
+              communicationQuality: rating.communicationQuality || 0,
               jobTitle: interview.jobTitle,
               date: detail.created_at
             });
@@ -225,16 +221,16 @@ const CandidateScoresList = ({ selectedJobRole, darkTheme, users }: {
           </div>
           <div className="flex items-center gap-3 text-xs">
             <span className={`${darkTheme ? "text-slate-400" : "text-slate-500"}`}>
-              T: {candidate.technical}
+              R: {candidate.relevance}
             </span>
             <span className={`${darkTheme ? "text-slate-400" : "text-slate-500"}`}>
-              C: {candidate.communication}
+              T: {candidate.technicalDepth}
             </span>
             <span className={`${darkTheme ? "text-slate-400" : "text-slate-500"}`}>
-              P: {candidate.problemSolving}
+              C: {candidate.clarity}
             </span>
             <span className={`${darkTheme ? "text-slate-400" : "text-slate-500"}`}>
-              E: {candidate.experience}
+              Q: {candidate.communicationQuality}
             </span>
           </div>
           <div className={`text-xs mt-1 ${darkTheme ? "text-slate-500" : "text-slate-400"}`}>
@@ -306,12 +302,8 @@ const HRAnalytics = () => {
     completedInterviews.forEach(detail => {
       if (detail.feedback?.data?.feedback?.rating) {
         const rating = detail.feedback.data.feedback.rating;
-        const avgScore = (
-          (rating.technicalSkills || 0) + 
-          (rating.communication || 0) + 
-          (rating.problemSolving || 0) + 
-          (rating.experience || 0)
-        ) / 4;
+        const sum = (rating.relevance || 0) + (rating.technicalDepth || 0) + (rating.clarity || 0) + (rating.communicationQuality || 0);
+        const avgScore = (sum / 20) * 100;
         scores.push(avgScore);
       }
     });
@@ -344,12 +336,8 @@ const HRAnalytics = () => {
       completedDetails.forEach(detail => {
         if (detail.feedback?.data?.feedback?.rating) {
           const rating = detail.feedback.data.feedback.rating;
-          const avgScore = (
-            (rating.technicalSkills || 0) + 
-            (rating.communication || 0) + 
-            (rating.problemSolving || 0) + 
-            (rating.experience || 0)
-          ) / 4;
+          const sum = (rating.relevance || 0) + (rating.technicalDepth || 0) + (rating.clarity || 0) + (rating.communicationQuality || 0);
+          const avgScore = (sum / 20) * 100;
           stats.totalScore += avgScore;
         }
       });
@@ -436,12 +424,8 @@ const HRAnalytics = () => {
       completedDetails.forEach(detail => {
         if (detail.feedback?.data?.feedback?.rating) {
           const rating = detail.feedback.data.feedback.rating;
-          const avgScore = (
-            (rating.technicalSkills || 0) + 
-            (rating.communication || 0) + 
-            (rating.problemSolving || 0) + 
-            (rating.experience || 0)
-          ) / 4;
+          const sum = (rating.relevance || 0) + (rating.technicalDepth || 0) + (rating.clarity || 0) + (rating.communicationQuality || 0);
+          const avgScore = (sum / 20) * 100;   //score here formula used 
           monthData.totalScore += avgScore;
         }
       });
@@ -725,7 +709,7 @@ const HRAnalytics = () => {
       }
       
       // Footer on each page
-      const totalPages = pdf.internal.getNumberOfPages();
+      const totalPages = (pdf.internal as any).getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         pdf.setFont('helvetica', 'normal');

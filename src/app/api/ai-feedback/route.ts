@@ -14,10 +14,10 @@ interface FeedbackRequest {
 const feedbackSchema = z.object({
   feedback: z.object({
     rating: z.object({
-      technicalSkills: z.number().min(0).max(10).describe("Technical proficiency and knowledge depth"),
-      communication: z.number().min(0).max(10).describe("Clarity, articulation, and professional communication"),
-      problemSolving: z.number().min(0).max(10).describe("Analytical thinking and solution approach"),
-      experience: z.number().min(0).max(10).describe("Relevant professional experience and achievements"),
+      relevance: z.number().min(0).max(5).describe("Relevance of candidate's background and experience to the job requirements"),
+      technicalDepth: z.number().min(0).max(5).describe("Depth of technical knowledge and expertise demonstrated"),
+      clarity: z.number().min(0).max(5).describe("Clarity of thought and expression in responses"),
+      communicationQuality: z.number().min(0).max(5).describe("Overall quality of communication, including listening and articulation"),
     }),
     summary: z.string().describe("Comprehensive 4-5 line summary highlighting key strengths and areas for improvement"),
     recommendation: z.enum(["Yes", "No", "Maybe"]).describe("Clear hiring recommendation"),
@@ -43,17 +43,17 @@ INTERVIEW CONVERSATION:
 FEEDBACK GENERATION GUIDELINES:
 1. Analyze the candidate's responses thoroughly and objectively
 2. Provide specific examples from the conversation to support your assessment
-3. Rate each category on a 0-10 scale where:
-   - 0-3: Below expectations
-   - 4-6: Meets basic expectations
-   - 7-8: Above expectations
-   - 9-10: Exceptional
+3. Rate each category on a 0-5 scale where:
+   - 0-1: Below expectations
+   - 2-3: Meets basic expectations
+   - 4: Above expectations
+   - 5: Exceptional
 
 ASSESSMENT CRITERIA:
-- Technical Skills: Depth of knowledge, practical application, problem-solving ability
-- Communication: Clarity, articulation, listening skills, professional demeanor
-- Problem Solving: Logical thinking, analytical approach, creativity in solutions
-- Experience: Relevance, depth, achievements, growth potential
+- Relevance: Relevance of candidate's background and experience to the job requirements
+- Technical Depth: Depth of technical knowledge and expertise demonstrated
+- Clarity: Clarity of thought and expression in responses
+- Communication Quality: Overall quality of communication, including listening and articulation
 
 RECOMMENDATION SCALE:
 - "Yes": Strong candidate, recommended for hire
@@ -151,10 +151,10 @@ export async function POST(request: Request) {
     const finalResult = {
       feedback: {
         rating: {
-          technicalSkills: result?.feedback?.rating?.technicalSkills ?? 0,
-          communication: result?.feedback?.rating?.communication ?? 0,
-          problemSolving: result?.feedback?.rating?.problemSolving ?? 0,
-          experience: result?.feedback?.rating?.experience ?? 0,
+          relevance: result?.feedback?.rating?.relevance ?? 0,
+          technicalDepth: result?.feedback?.rating?.technicalDepth ?? 0,
+          clarity: result?.feedback?.rating?.clarity ?? 0,
+          communicationQuality: result?.feedback?.rating?.communicationQuality ?? 0,
         },
         summary: result?.feedback?.summary ?? "Insufficient data provided for comprehensive assessment.",
         recommendation: result?.feedback?.recommendation ?? "No",

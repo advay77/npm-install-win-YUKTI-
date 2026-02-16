@@ -80,15 +80,15 @@ export const generatePDFReport = async (feedbackData: any, interviewInfo: any) =
     if (ratings) {
       const values = Object.values(ratings);
       const sum = values.reduce((acc: number, v: any) => acc + (v ?? 0), 0);
-      const avgScore = values.length > 0 ? sum / values.length : 0;
+      const overallScore = (sum / 20) * 100;
       
       addColoredText('Overall Performance Score', 20, yPosition, primaryColor, 16, true);
       yPosition += 10;
       
       // Score circle visualization
-      const scoreText = `${avgScore.toFixed(1)}/10`;
+      const scoreText = `${overallScore.toFixed(1)}%`;
       addColoredText(scoreText, 20, yPosition, 
-        avgScore >= 7 ? accentColor : avgScore >= 5 ? [255, 165, 0] : [239, 68, 68], 24, true);
+        overallScore >= 70 ? accentColor : overallScore >= 50 ? [255, 165, 0] : [239, 68, 68], 24, true);
       yPosition += 15;
     }
     
@@ -98,10 +98,10 @@ export const generatePDFReport = async (feedbackData: any, interviewInfo: any) =
       yPosition += 10;
       
       const categories = [
-        { name: 'Technical Skills', score: ratings.technicalSkills },
-        { name: 'Communication', score: ratings.communication },
-        { name: 'Problem Solving', score: ratings.problemSolving },
-        { name: 'Experience', score: ratings.experience }
+        { name: 'Relevance', score: ratings.relevance },
+        { name: 'Technical Depth', score: ratings.technicalDepth },
+        { name: 'Clarity', score: ratings.clarity },
+        { name: 'Communication Quality', score: ratings.communicationQuality }
       ];
       
       categories.forEach((category) => {
@@ -119,13 +119,13 @@ export const generatePDFReport = async (feedbackData: any, interviewInfo: any) =
           pdf.rect(barX, barY, barWidth, barHeight, 'F');
           
           // Score bar
-          const scoreWidth = (category.score / 10) * barWidth;
-          const fillColor = category.score >= 7 ? [0, 150, 0] : category.score >= 5 ? [255, 165, 0] : [255, 0, 0];
+          const scoreWidth = (category.score / 5) * barWidth;
+          const fillColor = category.score >= 4 ? [0, 150, 0] : category.score >= 3 ? [255, 165, 0] : [255, 0, 0];
           pdf.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
           pdf.rect(barX, barY, scoreWidth, barHeight, 'F');
           
           // Score text
-          addColoredText(`${category.score.toFixed(1)}/10`, barX + barWidth + 5, yPosition, secondaryColor, 10);
+          addColoredText(`${category.score.toFixed(1)}/5`, barX + barWidth + 5, yPosition, secondaryColor, 10);
           
           yPosition += 12;
         }
