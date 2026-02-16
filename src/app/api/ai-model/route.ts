@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from "next/server";
-import { ChatGroq } from "@langchain/groq";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StructuredOutputParser } from "@langchain/core/output_parsers";
 import { z } from "zod";
@@ -46,48 +46,12 @@ Interview Duration: {interviewDuration} minutes
 Interview Type: {interviewType}
 Target Question Count: {targetCount}
 
-QUESTION GENERATION GUIDELINES:
-1. Analyze the job description thoroughly to identify:
-   - Core technical skills required
-   - Key responsibilities and daily tasks
-   - Experience level expectations
-   - Industry-specific knowledge
-   - Soft skills needed for success
-
-2. Generate questions that:
-   - Are specific and relevant to the job role
-   - Assess both theoretical knowledge and practical application
-   - Progress from basic to advanced complexity
-   - Can be adequately answered within the time constraints
-   - Align perfectly with the specified interview types: {interviewType}
-
-3. Question Quality Standards:
-   - Avoid generic or cookie-cutter questions
-   - Include scenario-based questions where appropriate
-   - Ensure questions are clear, concise, and unambiguous
-   - Focus on problem-solving and critical thinking
-   - Reflect current industry standards and practices
-
-4. Interview Type Specifics:
-   - Technical: Focus on skills, tools, technologies, and problem-solving
-   - Behavioral: Emphasize past experiences, conflict resolution, teamwork
-   - Problem Solving: Include case studies and analytical challenges
-   - Leadership: Assess team management, decision-making, strategic thinking
-   - Experience: Evaluate career progression, achievements, and growth
-
-5. Time Management:
-   - Each question should allow for 2-4 minutes of response time
-   - Include follow-up opportunities within the main questions
-   - Ensure all {targetCount} questions fit within {interviewDuration} minutes
-
-CRITICAL REQUIREMENTS:
-- Generate EXACTLY {targetCount} questions - no more, no less
-- ALL questions must match the specified interview types: {interviewType}
-- Questions must be role-specific and demonstrate understanding of the field
-- Avoid questions that could be answered with simple "yes/no" responses
-- Ensure questions are legally appropriate and non-discriminatory
-
-Return a JSON array containing a single object with the key 'interviewQuestions' containing an array of objects with 'question' and 'type' fields. Do not include markdown formatting, explanations, or additional text.
+Your task:
+- Analyze the job description to identify the key responsibilities, required skills, and expected experience.
+- Generate questions that can be covered in {interviewDuration}-minute interview and produce EXACTLY {targetCount} questions.
+- Ensure ALL questions are ONLY of the types specified in {interviewType} (e.g., {interviewType}). Do NOT include questions of any other type.
+- Ensure the questions match the tone and structure of a real-life {interviewType} interview.
+- Return ONLY raw JSON. Do NOT include markdown code blocks (like \`\`\`json), explanations, or extra text. Your entire response must be a single valid JSON object.
 
 {format_instructions}
 `;
@@ -132,57 +96,84 @@ export async function POST(request: Request) {
       format_instructions: parser.getFormatInstructions(),
     };
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-    if (!groqApiKey) {
-      console.error('[ai-model] GROQ_API_KEY is missing');
-      return NextResponse.json(
-        {
-          isError: true,
-          error:
-            'GROQ_API_KEY is not set. Please set the correct Groq API key in the environment.',
-        },
-        { status: 500 }
-      );
+    const geminiApiKey = process.env.NEXT_PUBLIC_GOOGLE_GENAI_KEY;
+    if (!geminiApiKey) {
+      console.error('[ai-model] API KEY MISSING in process.env');
+      return NextResponse.json({ isError: true, error: "API Key not found in local environment." }, { status: 500 });
     }
+    console.log('[ai-model] API Key loaded (first 4 chars):', geminiApiKey.substring(0, 4));
 
-    if (groqApiKey.startsWith('xai-')) {
-      console.error('[ai-model] GROQ_API_KEY appears to be a Grok/X key (starts with xai-)');
-      return NextResponse.json(
-        {
-          isError: true,
-          error:
-            'Detected a Grok API key in GROQ_API_KEY (starts with "xai-"). Either set a valid Groq key in GROQ_API_KEY or switch the code to use Grok. See README or contact the maintainer.',
-        },
-        { status: 400 }
-      );
-    }
+    // Some environments/SDKs prefer GOOGLE_API_KEY instead of passing it explicitly
+    process.env.GOOGLE_API_KEY = geminiApiKey;
 
-    const llm = new ChatGroq({
-      apiKey: groqApiKey,
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      temperature: 0.4, // Lower temperature for more consistent question quality
-      maxTokens: 800, // Increased tokens for more detailed questions
-      maxRetries: 3,
-    });
+    // Use official SDK which is more robust for localhost
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const chain = promptTemplate.pipe(llm).pipe(parser);
-
-    // Run the chain
-    let result: any;
+    let rawText = "";
     try {
-      result = await chain.invoke(input);
-    } catch (llmErr: any) {
-      console.error('LLM invocation error:', llmErr);
-      // If the LLM client returned an HTTP response, include status/message
-      const status = llmErr?.status || llmErr?.response?.status;
-      const msg = llmErr?.message || llmErr?.response?.data || String(llmErr);
-      return NextResponse.json(
-        {
-          isError: true,
-          error: `LLM request failed${status ? ` (status ${status})` : ''}: ${msg}`,
+      const formattedPrompt = await promptTemplate.format(input);
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: formattedPrompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+          responseMimeType: "application/json",
         },
+      });
+
+      const response = await result.response;
+      rawText = response.text();
+      console.log("[ai-model] SDK RESPONSE:", rawText);
+    } catch (llmErr: any) {
+      console.error('[ai-model] SDK Error:', llmErr);
+      return NextResponse.json(
+        { isError: true, error: `AI Service Error: ${llmErr.message || "Failed to generate content"}` },
         { status: 502 }
       );
+    }
+
+    console.log('[ai-model] RAW AI RESPONSE:', rawText);
+
+    // Extract JSON using a more robust regex
+    let cleanedText = rawText.trim();
+    const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      cleanedText = jsonMatch[1].trim();
+    } else {
+      // Find the first [ or { and the last ] or }
+      const startIdx = cleanedText.indexOf('[');
+      const startIdxObj = cleanedText.indexOf('{');
+      const finalStartIdx = (startIdx !== -1 && startIdxObj !== -1) ? Math.min(startIdx, startIdxObj) : (startIdx !== -1 ? startIdx : startIdxObj);
+
+      const endIdx = cleanedText.lastIndexOf(']');
+      const endIdxObj = cleanedText.lastIndexOf('}');
+      const finalEndIdx = Math.max(endIdx, endIdxObj);
+
+      if (finalStartIdx !== -1 && finalEndIdx !== -1 && finalEndIdx > finalStartIdx) {
+        cleanedText = cleanedText.substring(finalStartIdx, finalEndIdx + 1);
+      }
+    }
+
+    let result: any;
+    try {
+      result = JSON.parse(cleanedText);
+    } catch (parseErr) {
+      console.error('[ai-model] Manual JSON parse failed, trying LangChain parser. Cleaned text length:', cleanedText.length);
+      try {
+        result = await parser.parse(cleanedText);
+      } catch (parserErr: any) {
+        console.error('[ai-model] All parsing methods failed. Raw snippet:', rawText.substring(0, 100));
+        return NextResponse.json(
+          {
+            isError: true,
+            error: "AI response was not in a valid format. Please try again.",
+            details: parserErr.message
+          },
+          { status: 502 }
+        );
+      }
     }
 
     // Fallback to extract inner object for UI

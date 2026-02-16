@@ -73,6 +73,11 @@ const InterviewFormContainer: React.FC<InterviewFormProps> = ({
   onSubmit,
 }) => {
   const { darkTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className={`p-4 rounded-md max-w-[700px] ${darkTheme ? "bg-slate-800" : "bg-white"}`}>
@@ -114,26 +119,30 @@ const InterviewFormContainer: React.FC<InterviewFormProps> = ({
           <Label htmlFor="duration" className={`text-lg font-inter mb-2 ${darkTheme ? "text-slate-200" : "text-black"}`}>
             Interview Duration
           </Label>
-          <Select
-            value={formData.interviewDuration}
-            onValueChange={(value) =>
-              onHandleInputChange("interviewDuration", value)
-            }
-          >
-            <SelectTrigger className={`w-[180px] ${darkTheme ? "border-slate-600 bg-slate-700 text-white" : "border-gray-200"}`}>
-              <SelectValue placeholder="Select Duration" />
-            </SelectTrigger>
-            <SelectContent className={darkTheme ? "bg-slate-700 text-white" : ""}>
-              <SelectGroup>
-                <SelectLabel className={darkTheme ? "text-slate-300" : ""}>Time in Min:</SelectLabel>
-                {["10", "15", "30", "45"].map((val) => (
-                  <SelectItem key={val} value={val} className={darkTheme ? "text-white" : ""}>
-                    {val}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {mounted ? (
+            <Select
+              value={formData.interviewDuration}
+              onValueChange={(value) =>
+                onHandleInputChange("interviewDuration", value)
+              }
+            >
+              <SelectTrigger className={`w-[180px] ${darkTheme ? "border-slate-600 bg-slate-700 text-white" : "border-gray-200"}`}>
+                <SelectValue placeholder="Select Duration" />
+              </SelectTrigger>
+              <SelectContent className={darkTheme ? "bg-slate-700 text-white" : ""}>
+                <SelectGroup>
+                  <SelectLabel className={darkTheme ? "text-slate-300" : ""}>Time in Min:</SelectLabel>
+                  {["10", "15", "30", "45"].map((val) => (
+                    <SelectItem key={val} value={val} className={darkTheme ? "text-white" : ""}>
+                      {val}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className={`h-9 w-[180px] rounded-md border ${darkTheme ? "border-slate-600 bg-slate-700" : "border-gray-200"}`} />
+          )}
         </CardContent>
 
         {/* Interview Types */}
