@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-   images: {
+  turbopack: {},
+  images: {
     domains: ["lh3.googleusercontent.com"], 
   },
   webpack: (config, { isServer }) => {
