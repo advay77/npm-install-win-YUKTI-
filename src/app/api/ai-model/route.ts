@@ -32,27 +32,62 @@ const questionSchema = z.array(
   })
 );
 
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const parser = StructuredOutputParser.fromZodSchema(questionSchema as any);
 
 const promptText = `
-You are generating interview questions for ${PROJECT_NAME}, an ${PROJECT_TAGLINE}.
+You are an expert technical interviewer and hiring manager generating high-quality interview questions for ${PROJECT_NAME}, an ${PROJECT_TAGLINE}.
 Always refer to the platform as "${PROJECT_NAME}".
 
-Based on the following inputs, generate a well-structured list of high-quality interview questions:
+Based on the following inputs, generate a comprehensive set of interview questions that accurately assess candidate capabilities:
 Job Title: {jobTitle}
 Job Description: {jobDescription}
-Interview Duration: {interviewDuration}
+Interview Duration: {interviewDuration} minutes
 Interview Type: {interviewType}
 Target Question Count: {targetCount}
 
-Your task:
-- Analyze the job description to identify the key responsibilities, required skills, and expected experience.
-- Generate questions that can be covered in {interviewDuration}-minute interview and produce EXACTLY {targetCount} questions.
-- Ensure ALL questions are ONLY of the types specified in {interviewType} (e.g., {interviewType}). Do NOT include questions of any other type.
-- Ensure the questions match the tone and structure of a real-life {interviewType} interview.
-- Return a JSON array containing a single object with the key 'interviewQuestions' containing an array of objects with 'question' and 'type' fields. Do not include markdown, explanations, or extra text.
+QUESTION GENERATION GUIDELINES:
+1. Analyze the job description thoroughly to identify:
+   - Core technical skills required
+   - Key responsibilities and daily tasks
+   - Experience level expectations
+   - Industry-specific knowledge
+   - Soft skills needed for success
+
+2. Generate questions that:
+   - Are specific and relevant to the job role
+   - Assess both theoretical knowledge and practical application
+   - Progress from basic to advanced complexity
+   - Can be adequately answered within the time constraints
+   - Align perfectly with the specified interview types: {interviewType}
+
+3. Question Quality Standards:
+   - Avoid generic or cookie-cutter questions
+   - Include scenario-based questions where appropriate
+   - Ensure questions are clear, concise, and unambiguous
+   - Focus on problem-solving and critical thinking
+   - Reflect current industry standards and practices
+
+4. Interview Type Specifics:
+   - Technical: Focus on skills, tools, technologies, and problem-solving
+   - Behavioral: Emphasize past experiences, conflict resolution, teamwork
+   - Problem Solving: Include case studies and analytical challenges
+   - Leadership: Assess team management, decision-making, strategic thinking
+   - Experience: Evaluate career progression, achievements, and growth
+
+5. Time Management:
+   - Each question should allow for 2-4 minutes of response time
+   - Include follow-up opportunities within the main questions
+   - Ensure all {targetCount} questions fit within {interviewDuration} minutes
+
+CRITICAL REQUIREMENTS:
+- Generate EXACTLY {targetCount} questions - no more, no less
+- ALL questions must match the specified interview types: {interviewType}
+- Questions must be role-specific and demonstrate understanding of the field
+- Avoid questions that could be answered with simple "yes/no" responses
+- Ensure questions are legally appropriate and non-discriminatory
+
+Return a JSON array containing a single object with the key 'interviewQuestions' containing an array of objects with 'question' and 'type' fields. Do not include markdown formatting, explanations, or additional text.
 
 {format_instructions}
 `;
@@ -125,8 +160,8 @@ export async function POST(request: Request) {
     const llm = new ChatGroq({
       apiKey: groqApiKey,
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      temperature: 0.7,
-      maxTokens: 600,
+      temperature: 0.4, // Lower temperature for more consistent question quality
+      maxTokens: 800, // Increased tokens for more detailed questions
       maxRetries: 3,
     });
 

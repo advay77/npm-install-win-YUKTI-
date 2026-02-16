@@ -24,13 +24,14 @@ import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/services/supabaseClient";
 import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
 
 type Message = {
   role: "user" | "ai";
   text: string;
 };
 
-export function SheetDemo() {
+function SheetDemoInner() {
   const { users } = useUserData();
   const { darkTheme } = useTheme();
   const router = useRouter();
@@ -304,3 +305,7 @@ Start your free trial today and unlock the future of recruitment! 🎯`;
     </Sheet >
   );
 }
+
+export const SheetDemo = dynamic(() => Promise.resolve(SheetDemoInner), {
+  ssr: false,
+});

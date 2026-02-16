@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
+import { generatePDFReport } from "@/utils/pdfGenerator";
 import Vapi from "@vapi-ai/web";
 import {
   AlertDialog,
@@ -40,6 +41,7 @@ import { toast } from "sonner";
 import { json, set } from "zod";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import jsPDF from 'jspdf';
 import {
   Dialog,
   DialogContent,
@@ -86,6 +88,7 @@ const StartInterview = () => {
   const [generateLoading, setGenerateLoading] = useState<boolean>(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [hasAttempted, setHasAttempted] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<any>(null);
 
   const [vapi] = useState(() => new Vapi(VAPI_PUBLIC_KEY));
 
@@ -95,6 +98,20 @@ const StartInterview = () => {
   const [isMicOn, setIsMicOn] = useState(false);
   const micInitRef = useRef(false);
   const cameraInitRef = useRef(false);
+
+  // Cheating detection states
+  const [warningMessage, setWarningMessage] = useState<string>("");
+  const [showWarning, setShowWarning] = useState<boolean>(false);
+  const [suspiciousActivities, setSuspiciousActivities] = useState<string[]>([]);
+  const [warningCount, setWarningCount] = useState<number>(0);
+  const cheatingDetectionRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up cheating detection on unmount
+  useEffect(() => {
+    return () => {
+      stopCheatingDetection();
+    };
+  }, []);
 
   const transcriptRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -189,6 +206,9 @@ const StartInterview = () => {
       toast.success("Camera turned on");
       setStream(mediaStream);
       setIsCameraOn(true);
+      
+      // Start cheating detection when camera is on
+      startCheatingDetection();
     } catch (err) {
       console.error("Camera access error:", err);
     }
@@ -204,6 +224,9 @@ const StartInterview = () => {
     }
     toast.success("Camera turned off");
     setIsCameraOn(false);
+    
+    // Stop cheating detection when camera is off
+    stopCheatingDetection();
   };
 
   const toggleCamera = () => {
@@ -281,37 +304,42 @@ const StartInterview = () => {
             {
               role: "system",
               content:
-                `
-You are an AI voice assistant conducting interviews.
-Your job is to ask candidates provided interview questions, assess their responses.
+                `You are a professional AI interviewer conducting a technical and behavioral assessment for the position of ${interviewInfo?.jobPosition || 'this role'}.
 
-Begin the conversation with a friendly introduction, setting a relaxed yet professional tone. Example:
-"Hey there! Welcome to your ` +
-                interviewInfo?.jobPosition +
-                ` interview, Let's get started with a few questions!"
+INTERVIEW GUIDELINES:
+1. Begin with a warm, professional introduction and explain the interview process
+2. Ask questions one at a time from the provided list
+3. Listen carefully to complete answers before proceeding
+4. Ask relevant follow-up questions to probe deeper into candidate responses
+5. Maintain a conversational yet professional tone throughout
+6. Provide encouraging but realistic feedback after each major answer
+7. Manage time effectively to ensure all questions are covered
 
-Ask one question at a time and wait for the candidate's response before proceeding. 
-Keep the questions clear and concise. Below Are the questions ask one by one:
-Questions: ` +
-                questionList +
-                `
+INTERVIEW QUESTIONS (ask in order):
+${questionList}
 
-If the candidate struggles, offer hints or rephrase the question without giving away the answer. Example:
-"Need a hint? Think about how React tracks component updates!"
+ASSESSMENT CRITERIA:
+- Technical knowledge and practical application
+- Problem-solving approach and logical thinking
+- Communication clarity and articulation
+- Professional experience and achievements
+- Cultural fit and enthusiasm
 
-Provide brief, encouraging feedback after each answer. Example:
-"Nice! That's a solid answer."
-"Hmm, not quite! Want to try again?"
+SAMPLE INTRODUCTION:
+"Good morning/afternoon! Welcome to your ${interviewInfo?.jobPosition || 'interview'}. I'm your AI interviewer, and today we'll discuss your experience and skills through a series of questions. This typically takes about ${interviewInfo?.interviewDuration || '30'} minutes. Please feel free to take your time with your answers. Shall we begin?"
 
-Keep the conversation natural and engaging—use casual phrases like 
-"Alright, next up..." or "Let's tackle a tricky one!"
+FOLLOW-UP STRATEGIES:
+- "Could you elaborate on that specific example?"
+- "What challenges did you face in that situation?"
+- "How did you measure the success of your approach?"
+- "What would you do differently in hindsight?"
 
-Key Guidelines:
-Be friendly, engaging, and witty ✏️
-Keep responses short and natural, like a real conversation
-Adapt based on the candidate's confidence level
-Ensure the interview remains focused on React
-`.trim(),
+FEEDBACK EXAMPLES:
+- "That's a comprehensive answer. Your experience with [specific technology] seems solid."
+- "Interesting approach! Can you walk me through your decision-making process?"
+- "I appreciate your honesty. Let's explore this from another angle."
+
+Remember: You are assessing both technical competence and communication skills. Maintain engagement and show genuine interest in their responses.`
             },
           ],
         },
@@ -467,8 +495,167 @@ Ensure the interview remains focused on React
     vapi.stop();
     setIsMicOn(false);
     toast.success("Call ended");
+    
+    // Stop cheating detection when call ends
+    stopCheatingDetection();
   };
 
+  // Cheating detection functions
+  const startCheatingDetection = () => {
+    if (cheatingDetectionRef.current) return;
+    
+    cheatingDetectionRef.current = setInterval(() => {
+      detectSuspiciousActivity();
+    }, 5000); // Check every 5 seconds
+  };
+
+  const stopCheatingDetection = () => {
+    if (cheatingDetectionRef.current) {
+      clearInterval(cheatingDetectionRef.current);
+      cheatingDetectionRef.current = null;
+    }
+  };
+
+  const detectSuspiciousActivity = () => {
+    if (!videoRef.current || !isCallActive) return;
+    
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
+    
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    try {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
+      // Basic motion detection and object analysis
+      const suspiciousActivity = analyzeFrameForCheating(imageData);
+      
+      if (suspiciousActivity) {
+        handleSuspiciousActivity(suspiciousActivity);
+      }
+    } catch (error) {
+      console.error('Error in cheating detection:', error);
+    }
+  };
+
+  const analyzeFrameForCheating = (imageData: ImageData): string | null => {
+    const data = imageData.data;
+    let brightness = 0;
+    let motionPixels = 0;
+    let faceDetected = false;
+    
+    // Simple brightness analysis (for phone screens, papers, etc.)
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      brightness += (r + g + b) / 3;
+      
+      // Detect bright spots (potential phone screens)
+      if (r > 200 && g > 200 && b > 200) {
+        motionPixels++;
+      }
+    }
+    
+    const avgBrightness = brightness / (data.length / 4);
+    const brightPixelRatio = motionPixels / (data.length / 4);
+    
+    // Check for suspicious conditions
+    if (brightPixelRatio > 0.1) {
+      return "Bright screen detected - possible phone or device usage";
+    }
+    
+    if (avgBrightness < 30) {
+      return "Very low lighting - suspicious environment";
+    }
+    
+    // Check if face is visible (basic detection)
+    // In a real implementation, you'd use face detection API
+    const centerRegion = getCenterRegionBrightness(data, imageData.width, imageData.height);
+    if (centerRegion < 20) {
+      return "No face detected in camera view";
+    }
+    
+    return null;
+  };
+
+  const getCenterRegionBrightness = (data: Uint8ClampedArray, width: number, height: number): number => {
+    let centerBrightness = 0;
+    const centerX = Math.floor(width / 2);
+    const centerY = Math.floor(height / 2);
+    const regionSize = 100;
+    
+    for (let y = centerY - regionSize; y < centerY + regionSize; y++) {
+      for (let x = centerX - regionSize; x < centerX + regionSize; x++) {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          const i = (y * width + x) * 4;
+          centerBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+        }
+      }
+    }
+    
+    return centerBrightness / (regionSize * regionSize * 4);
+  };
+
+  const handleSuspiciousActivity = (activity: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = `${timestamp}: ${activity}`;
+    
+    setSuspiciousActivities(prev => [...prev.slice(-4), logEntry]);
+    setWarningCount(prev => prev + 1);
+    
+    // Show warning to candidate
+    showWarningToCandidate(activity);
+    
+    // Log for review
+    console.warn('Suspicious activity detected:', logEntry);
+    
+    // End interview after 3 warnings
+    if (warningCount >= 2) {
+      endInterviewDueToCheating();
+    }
+  };
+
+  const showWarningToCandidate = (activity: string) => {
+    setWarningMessage(`⚠️ Warning: ${activity}. Please ensure you are visible and no unauthorized materials are present.`);
+    setShowWarning(true);
+    
+    // Auto-hide warning after 5 seconds
+    setTimeout(() => {
+      setShowWarning(false);
+    }, 5000);
+    
+    toast.warning("Interview Warning", {
+      description: activity,
+      duration: 5000,
+    });
+  };
+
+  const endInterviewDueToCheating = () => {
+    toast.error("Interview terminated due to suspicious activity", {
+      description: "Multiple warnings were issued. The interview has been ended.",
+      duration: 10000,
+    });
+    
+    // Log the termination
+    const terminationLog = `${new Date().toLocaleTimeString()}: Interview terminated due to multiple cheating warnings`;
+    setSuspiciousActivities(prev => [...prev, terminationLog]);
+    
+    // Stop the call
+    stopCall();
+    
+    // Redirect after a delay
+    setTimeout(() => {
+      router.push('/');
+    }, 3000);
+  };
+
+  
   const GenerateFeedback = async () => {
     setGenerateLoading(true);
     try {
@@ -484,6 +671,9 @@ Ensure the interview remains focused on React
         conversation: messages,
       });
       console.log("✅ Feedback Result From GROQ LLM:", res.data);
+      
+      // Store feedback data for PDF generation
+      setFeedbackData(res.data);
 
       const { data, error } = await supabase
         .from("interview-details")
@@ -510,6 +700,10 @@ Ensure the interview remains focused on React
       }
 
       console.log("✅ Interview Details Saved:", data);
+      
+      // Generate PDF report
+      await generatePDFReport(feedbackData, interviewInfo);
+      
       toast.success("Interview feedback saved successfully!", {
         description: (
           <span className="text-sm text-gray-500 font-medium">
@@ -633,6 +827,21 @@ Ensure the interview remains focused on React
   //   -----------------------------
   return (
     <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-3 py-3 text-slate-50 overflow-hidden flex flex-col">
+      {/* Warning Banner */}
+      {showWarning && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg animate-pulse">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 bg-white rounded-full animate-ping" />
+              <p className="font-semibold text-sm">{warningMessage}</p>
+            </div>
+            <div className="text-xs font-medium">
+              Warning {warningCount}/3
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="mx-auto flex max-w-7xl flex-col gap-2 flex-1 w-full min-h-0">
         <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur shrink-0">
           <div className="flex flex-col gap-1.5">
@@ -808,6 +1017,20 @@ Ensure the interview remains focused on React
                 <LuGhost className="h-8 w-8 opacity-50" />
                 <p className="text-xs font-semibold text-slate-300">No transcriptions yet</p>
                 <p className="text-[10px] font-medium text-slate-500 leading-relaxed max-w-[200px]">Your conversation will appear here once the call begins.</p>
+                
+                {/* Suspicious Activities Log */}
+                {suspiciousActivities.length > 0 && (
+                  <div className="mt-4 w-full max-w-sm">
+                    <h4 className="text-xs font-semibold text-red-400 mb-2">⚠️ Activity Log</h4>
+                    <div className="space-y-1">
+                      {suspiciousActivities.map((activity, index) => (
+                        <div key={index} className="text-[10px] text-red-300 bg-red-900/20 px-2 py-1 rounded">
+                          {activity}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div ref={transcriptRef} className="mt-2 space-y-2 overflow-y-auto overflow-x-hidden pr-1.5 flex-1 min-h-0">
@@ -832,9 +1055,19 @@ Ensure the interview remains focused on React
 
             <div className="pt-2 w-full shrink-0">
               <Separator className="mb-2 bg-white/10" />
-              <Button onClick={downloadTranscription} className="flex w-full items-center justify-center gap-1.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 text-xs font-bold text-white shadow-lg hover:from-sky-400 hover:via-indigo-400 hover:to-fuchsia-400 h-9">
-                Download Transcription <LuDownload className="h-3.5 w-3.5" />
-              </Button>
+              <div className="grid grid-cols-1 gap-2">
+                <Button onClick={downloadTranscription} className="flex w-full items-center justify-center gap-1.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 text-xs font-bold text-white shadow-lg hover:from-sky-400 hover:via-indigo-400 hover:to-fuchsia-400 h-9">
+                  Download Transcription <LuDownload className="h-3.5 w-3.5" />
+                </Button>
+                {feedbackData && (
+                  <Button 
+                    onClick={() => generatePDFReport(feedbackData, interviewInfo)}
+                    className="flex w-full items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-xs font-bold text-white shadow-lg hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 h-9"
+                  >
+                    Download PDF Report <LuDownload className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -875,6 +1108,15 @@ Ensure the interview remains focused on React
                 >
                   Close
                 </Button>
+                {feedbackData && (
+                  <Button
+                    onClick={() => generatePDFReport(feedbackData, interviewInfo)}
+                    className="h-11 w-full font-semibold bg-gradient-to-r from-sky-500 to-indigo-500 text-white hover:from-sky-400 hover:to-indigo-400 flex items-center gap-2"
+                  >
+                    <LuDownload className="h-4 w-4" />
+                    Download PDF Report
+                  </Button>
+                )}
               </div>
             </div>
           </DialogContent>

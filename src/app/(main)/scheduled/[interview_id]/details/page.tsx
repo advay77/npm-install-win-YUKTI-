@@ -27,6 +27,7 @@ import Image from "next/image";
 import axios from "axios";
 import AILoadingState from "@/components/kokonutui/ai-loading";
 import SendMailForm from "@/components/SendMailForm";
+import { generatePDFReport } from "@/utils/pdfGenerator";
 
 // ---------- Interfaces ----------
 interface Question {
@@ -63,6 +64,8 @@ interface InterviewDetails {
 }
 
 interface Interview {
+  jobPosition: string | undefined;
+  duration: any;
   jobTitle?: string;
   jobDescription?: string;
   interview_id?: string;
@@ -159,7 +162,7 @@ export default function InterviewDetailsPage() {
       const result = await supabase
         .from("interviews")
         .select(
-          "jobTitle, jobDescription, interview_id, created_at, interviewDuration, interviewType, acceptResume, questionList, interview-details(userEmail,userName,feedback,resumeURL,created_at)"
+          "jobTitle, jobDescription, interview_id, created_at, interviewDuration, interviewType, acceptResume, questionList, \"interview-details\"(userEmail,userName,feedback,resumeURL,created_at)"
         )
         .eq("userEmail", users?.[0].email)
         .eq("interview_id", interview_id);
@@ -186,7 +189,7 @@ export default function InterviewDetailsPage() {
 
       if (!resumeUrl) {
         throw new Error("Resume URL is not available");
-      }
+      }  
 
       const { data } = await axios.post("/api/resume-score", {
         resumeURL: resumeUrl,
@@ -400,6 +403,21 @@ export default function InterviewDetailsPage() {
                             >
                               View Report <LuWorkflow />
                             </Button>
+                            {cand.feedback && (
+                              <Button
+                                variant="outline"
+                                onClick={() => generatePDFReport(cand.feedback, {
+                                  userName: cand.userName,
+                                  userEmail: cand.userEmail,
+                                  jobPosition: interview?.jobTitle || interview?.jobPosition,
+                                  jobTitle: interview?.jobTitle || interview?.jobPosition,
+                                  interviewType: interview?.interviewType,
+                                  duration: interview?.duration
+                                })}
+                              >
+                                Download PDF <Download />
+                              </Button>
+                            )}
                             {cand.resumeURL && (
                               <Button
                                 variant="outline"

@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/services/supabaseClient";
 
-interface DBUser {
+export interface DBUser {
   id: number;
   name: string;
   email: string;

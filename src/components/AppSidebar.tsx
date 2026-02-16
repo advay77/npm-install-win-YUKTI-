@@ -21,6 +21,7 @@ import {
   LuWalletCards,
   LuSettings,
   LuClock,
+  LuActivity,
 } from "react-icons/lu";
 import { useTheme } from "@/context/ThemeProvider";
 import clsx from "clsx";
@@ -42,6 +43,11 @@ const items = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LuLayoutGrid,
+  },
+  {
+    title: "HR Analytics",
+    url: "/analytics",
+    icon: LuActivity,
   },
   {
     title: "Scheduled",
