@@ -27,6 +27,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
+import { toast } from 'sonner';
 
 interface Interview {
   interview_id: string;
@@ -446,7 +447,7 @@ const HRAnalytics = () => {
       });
     });
     
-    return Array.from(monthlyData.entries()).map(([month, data]) => ({
+    return Array.from(monthlyData.entries()).map(([month, data]: [string, { interviews: number; totalScore: number; completed: number }]) => ({
       month,
       interviews: data.interviews,
       avgScore: data.completed > 0 ? Math.round(data.totalScore / data.completed) : 0,
@@ -502,6 +503,248 @@ const HRAnalytics = () => {
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     );
+  };
+
+  const handleExport = async () => {
+    try {
+      if (!analyticsData) {
+        toast.error('No data available to export');
+        return;
+      }
+
+      // Dynamic import to avoid SSR issues
+      const { default: jsPDF } = await import('jspdf');
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentWidth = pageWidth - 2 * margin;
+      
+      // Helper function to check if we need a new page
+      const checkAndAddPage = (requiredSpace: number, currentY: number) => {
+        if (currentY + requiredSpace > pageHeight - margin) {
+          pdf.addPage();
+          return margin;
+        }
+        return currentY;
+      };
+      
+      // Helper function to add section header
+      const addSectionHeader = (title: string, y: number) => {
+        pdf.setFillColor(59, 130, 246); // blue-500
+        pdf.rect(margin, y - 5, contentWidth, 10, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.text(title, margin + 5, y);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont('helvetica', 'normal');
+        return y + 15;
+      };
+      
+      // Helper function to add a table row
+      const addTableRow = (labels: string[], values: string[], y: number) => {
+        const colWidth = contentWidth / labels.length;
+        labels.forEach((label, index) => {
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(9);
+          pdf.text(label, margin + index * colWidth, y);
+        });
+        y += 6;
+        values.forEach((value, index) => {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+          pdf.text(value, margin + index * colWidth, y);
+        });
+        return y + 10;
+      };
+      
+      let yPosition = margin;
+      
+      // Cover Page Header
+      pdf.setFillColor(59, 130, 246);
+      pdf.rect(0, 0, pageWidth, 40, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(24);
+      pdf.text('HR Analytics Report', pageWidth / 2, 25, { align: 'center' });
+      
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, 50, { align: 'center' });
+      pdf.text(`Filter: ${selectedJobRole === 'all' ? 'All Job Roles' : selectedJobRole}`, pageWidth / 2, 57, { align: 'center' });
+      pdf.text(`Report ID: HR-${Date.now()}`, pageWidth / 2, 64, { align: 'center' });
+      
+      yPosition = 80;
+      
+      // Executive Summary
+      yPosition = checkAndAddPage(40, yPosition);
+      yPosition = addSectionHeader('Executive Summary', yPosition);
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      const summaryText = `This report provides a comprehensive analysis of interview performance data, including candidate distribution, success rates, and role-specific insights. The analysis covers ${analyticsData.totalInterviews} total interviews with ${analyticsData.completedInterviews} completed assessments, yielding an overall success rate of ${Math.round(((analyticsData.candidateDistribution.strong || 0) / (analyticsData.totalInterviews || 1)) * 100)}%.`;
+      const summaryLines = pdf.splitTextToSize(summaryText, contentWidth);
+      summaryLines.forEach((line: string) => {
+        pdf.text(line, margin, yPosition);
+        yPosition += 5;
+      });
+      yPosition += 10;
+      
+      // Key Metrics Dashboard
+      yPosition = checkAndAddPage(60, yPosition);
+      yPosition = addSectionHeader('Key Performance Metrics', yPosition);
+      
+      // Create a 2x2 grid for key metrics
+      const metrics = [
+        ['Total Interviews', analyticsData.totalInterviews.toString()],
+        ['Completed Interviews', analyticsData.completedInterviews.toString()],
+        ['Average Score', `${analyticsData.averageScore}%`],
+        ['Success Rate', `${Math.round(((analyticsData.candidateDistribution.strong || 0) / (analyticsData.totalInterviews || 1)) * 100)}%`]
+      ];
+      
+      for (let i = 0; i < metrics.length; i += 2) {
+        yPosition = addTableRow(
+          [metrics[i][0], metrics[i + 1][0]],
+          [metrics[i][1], metrics[i + 1][1]],
+          yPosition
+        );
+      }
+      
+      // Candidate Distribution Analysis
+      yPosition = checkAndAddPage(80, yPosition);
+      yPosition = addSectionHeader('Candidate Distribution Analysis', yPosition);
+      
+      const distributionData = [
+        ['Strong Candidates (≥80%)', analyticsData.candidateDistribution.strong.toString(), `${Math.round((analyticsData.candidateDistribution.strong / (analyticsData.totalInterviews || 1)) * 100)}%`],
+        ['Moderate Candidates (60-79%)', analyticsData.candidateDistribution.moderate.toString(), `${Math.round((analyticsData.candidateDistribution.moderate / (analyticsData.totalInterviews || 1)) * 100)}%`],
+        ['Needs Improvement (<60%)', analyticsData.candidateDistribution.weak.toString(), `${Math.round((analyticsData.candidateDistribution.weak / (analyticsData.totalInterviews || 1)) * 100)}%`]
+      ];
+      
+      yPosition = addTableRow(['Category', 'Count', 'Percentage'], ['Category', 'Count', 'Percentage'], yPosition);
+      distributionData.forEach(row => {
+        yPosition = addTableRow([row[0]], [`${row[1]} (${row[2]})`], yPosition);
+      });
+      
+      // Add visual representation
+      yPosition = checkAndAddPage(50, yPosition);
+      pdf.text('Distribution Visual:', margin, yPosition);
+      yPosition += 10;
+      
+      const totalCandidates = analyticsData.totalInterviews || 1;
+      const barWidth = contentWidth / 3;
+      const barHeight = 20;
+      
+      // Strong candidates bar
+      const strongWidth = (analyticsData.candidateDistribution.strong / totalCandidates) * barWidth;
+      pdf.setFillColor(16, 185, 129); // green
+      pdf.rect(margin, yPosition, strongWidth, barHeight, 'F');
+      pdf.text(`Strong: ${analyticsData.candidateDistribution.strong}`, margin, yPosition + barHeight + 5);
+      
+      // Moderate candidates bar
+      yPosition += barHeight + 15;
+      const moderateWidth = (analyticsData.candidateDistribution.moderate / totalCandidates) * barWidth;
+      pdf.setFillColor(245, 158, 11); // amber
+      pdf.rect(margin, yPosition, moderateWidth, barHeight, 'F');
+      pdf.text(`Moderate: ${analyticsData.candidateDistribution.moderate}`, margin, yPosition + barHeight + 5);
+      
+      // Weak candidates bar
+      yPosition += barHeight + 15;
+      const weakWidth = (analyticsData.candidateDistribution.weak / totalCandidates) * barWidth;
+      pdf.setFillColor(239, 68, 68); // red
+      pdf.rect(margin, yPosition, weakWidth, barHeight, 'F');
+      pdf.text(`Needs Improvement: ${analyticsData.candidateDistribution.weak}`, margin, yPosition + barHeight + 5);
+      
+      yPosition += barHeight + 20;
+      
+      // Job Role Performance Analysis
+      if (analyticsData.jobRoleStats.length > 0) {
+        yPosition = checkAndAddPage(100, yPosition);
+        yPosition = addSectionHeader('Job Role Performance Analysis', yPosition);
+        
+        yPosition = addTableRow(['Job Role', 'Interviews', 'Avg Score'], ['Job Role', 'Interviews', 'Avg Score'], yPosition);
+        
+        analyticsData.jobRoleStats.forEach(role => {
+          yPosition = addTableRow(
+            ['Job Role', 'Interviews', 'Avg Score'],
+            [role.role.length > 25 ? role.role.substring(0, 22) + '...' : role.role, `${role.count} interviews`, `${Math.round(role.avgScore)}%`],
+            yPosition
+          );
+        });
+        
+        // Performance insights
+        yPosition = checkAndAddPage(40, yPosition);
+        yPosition = addSectionHeader('Performance Insights', yPosition);
+        
+        const topRole = analyticsData.jobRoleStats.reduce((prev, current) => 
+          (prev.avgScore > current.avgScore) ? prev : current
+        );
+        
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        const insights = [
+          `Top Performing Role: ${topRole.role} with ${Math.round(topRole.avgScore)}% average score`,
+          `Total Roles Analyzed: ${analyticsData.jobRoleStats.length}`,
+          `Role with Most Interviews: ${analyticsData.jobRoleStats.reduce((prev, current) => (prev.count > current.count) ? prev : current).role}`
+        ];
+        
+        insights.forEach(insight => {
+          yPosition = checkAndAddPage(15, yPosition);
+          const insightLines = pdf.splitTextToSize(`• ${insight}`, contentWidth - 10);
+          insightLines.forEach((line: string) => {
+            pdf.text(line, margin + 5, yPosition);
+            yPosition += 5;
+          });
+          yPosition += 3;
+        });
+      }
+      
+      // Monthly Trends Analysis
+      const monthlyData = calculateMonthlyTrends();
+      if (monthlyData.length > 0) {
+        yPosition = checkAndAddPage(80, yPosition);
+        yPosition = addSectionHeader('Monthly Performance Trends', yPosition);
+        
+        yPosition = addTableRow(['Month', 'Interviews', 'Avg Score', 'Completion Rate'], ['Month', 'Interviews', 'Avg Score', 'Completion Rate'], yPosition);
+        
+        monthlyData.forEach(month => {
+          yPosition = addTableRow(
+            ['Month', 'Interviews', 'Avg Score', 'Completion Rate'],
+            [month.month, month.interviews.toString(), `${month.avgScore}%`, `${month.completionRate}%`],
+            yPosition
+          );
+        });
+      }
+      
+      // Footer on each page
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        pdf.text('InterviewX - AI Interview Platform', margin, pageHeight - 10);
+        pdf.text(`Confidential - Generated ${new Date().toLocaleDateString()}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+      }
+      
+      // Save the PDF
+      const fileName = `hr-analytics-report-${selectedJobRole === 'all' ? 'all-roles' : selectedJobRole.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success('Professional analytics report exported successfully!');
+    } catch (error) {
+      console.error('Error exporting analytics:', error);
+      toast.error('Failed to export analytics report');
+    }
   };
 
   const StatCard = ({ title, value, icon: Icon, trend, color, subtitle, progress }: {
@@ -577,19 +820,19 @@ const HRAnalytics = () => {
   }
 
   return (
-    <div className={`p-6 space-y-6 ${darkTheme ? "bg-slate-900" : "bg-slate-50"}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className={`p-4 sm:p-6 space-y-4 sm:space-y-6 ${darkTheme ? "bg-slate-900" : "bg-slate-50"}`}>
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="h-8 w-1 bg-gradient-to-b from-blue-600 to-blue-400 rounded-full"></div>
-          <h1 className={`text-3xl font-bold font-sora ${darkTheme ? "text-white" : "text-slate-900"}`}>
+          <h1 className={`text-2xl sm:text-3xl font-bold font-sora ${darkTheme ? "text-white" : "text-slate-900"}`}>
             HR Analytics Dashboard
           </h1>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Select value={selectedJobRole} onValueChange={setSelectedJobRole}>
-            <SelectTrigger className={`w-64 ${darkTheme ? "bg-slate-800 border-slate-600" : "bg-white border-slate-200"}`}>
+            <SelectTrigger className={`w-full sm:w-64 ${darkTheme ? "bg-slate-800 border-slate-600" : "bg-white border-slate-200"}`}>
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4" />
                 <SelectValue placeholder="Select job role" />
@@ -604,15 +847,20 @@ const HRAnalytics = () => {
             </SelectContent>
           </Select>
           
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors w-full sm:w-auto justify-center"
+            onClick={handleExport}
+          >
             <Download className="w-4 h-4" />
-            Export
+            <span className="hidden sm:inline">Export</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
         </div>
       </div>
 
-      {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Enhanced Stats Cards - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
         <StatCard 
           title="Total Interviews" 
           value={analyticsData?.totalInterviews || 0}
@@ -650,8 +898,8 @@ const HRAnalytics = () => {
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts - Responsive Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
         {/* Enhanced Candidate Distribution Pie Chart with Real-time Filtering */}
         <Card className={`${darkTheme ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
           <CardHeader>
@@ -676,7 +924,7 @@ const HRAnalytics = () => {
           <CardContent>
             {pieChartData.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={250}>
                   <RePieChart>
                     <defs>
                       <linearGradient id="colorGradient1" x1="0" y1="0" x2="0" y2="1">
@@ -698,8 +946,8 @@ const HRAnalytics = () => {
                       cy="50%"
                       labelLine={false}
                       label={CustomPieLabel}
-                      outerRadius={100}
-                      innerRadius={40}
+                      outerRadius={80}
+                      innerRadius={30}
                       fill="#8884d8"
                       dataKey="value"
                       animationBegin={0}
@@ -780,7 +1028,7 @@ const HRAnalytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={performanceData}>
                 <defs>
                   <linearGradient id="colorInterviews" x1="0" y1="0" x2="0" y2="1">
@@ -823,8 +1071,8 @@ const HRAnalytics = () => {
         </Card>
       </div>
 
-      {/* Additional Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Additional Charts Row - Responsive */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {/* Skills Radar Chart */}
         <Card className={`${darkTheme ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
           <CardHeader>
@@ -837,7 +1085,7 @@ const HRAnalytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={200}>
               <RadarChart data={skillsData}>
                 <PolarGrid stroke={darkTheme ? "#475569" : "#e2e8f0"} />
                 <PolarAngleAxis dataKey="skill" stroke={darkTheme ? "#94a3b8" : "#64748b"} />
@@ -862,7 +1110,7 @@ const HRAnalytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={analyticsData?.jobRoleStats || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke={darkTheme ? "#475569" : "#e2e8f0"} />
                 <XAxis 
@@ -870,8 +1118,8 @@ const HRAnalytics = () => {
                   stroke={darkTheme ? "#94a3b8" : "#64748b"}
                   angle={-45}
                   textAnchor="end"
-                  height={60}
-                  fontSize={12}
+                  height={80}
+                  fontSize={10}
                 />
                 <YAxis stroke={darkTheme ? "#94a3b8" : "#64748b"} />
                 <Tooltip content={<CustomTooltip />} />

@@ -22,6 +22,7 @@ import {
   LuSettings,
   LuClock,
   LuActivity,
+  LuTarget,
 } from "react-icons/lu";
 import { useTheme } from "@/context/ThemeProvider";
 import clsx from "clsx";
@@ -48,6 +49,11 @@ const items = [
     title: "HR Analytics",
     url: "/analytics",
     icon: LuActivity,
+  },
+  {
+    title: "Resume-Job Match",
+    url: "/skill-matching",
+    icon: LuTarget,
   },
   {
     title: "Scheduled",

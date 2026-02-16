@@ -22,14 +22,25 @@ export const generatePDFReport = async (feedbackData: any, interviewInfo: any) =
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     
-    // Colors - matching the dark theme from the image
+    // Colors
     const primaryColor = [59, 130, 246]; // blue-500
     const secondaryColor = [107, 114, 128]; // gray-500
     const accentColor = [16, 185, 129]; // emerald-500
-    const headerBgColor = [17, 24, 39]; // gray-900
-    const rejectColor = [239, 68, 68]; // red-500
-    const passColor = [34, 197, 94]; // green-500
     
+    // Helper function to check if we need a new page
+    const checkAndAddPage = (requiredSpace: number) => {
+      if (yPosition + requiredSpace > pageHeight - 30) {
+        pdf.addPage();
+        yPosition = 20; // Reset y position for new page
+        
+        // Add header to new page
+        pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        pdf.rect(0, 0, pageWidth, 30, 'F');
+        addColoredText('Interview Feedback Report (Continued)', 20, 20, [255, 255, 255], 16, true);
+        yPosition = 50;
+      }
+    };
+
     // Helper function for colored text
     const addColoredText = (text: string, x: number, y: number, color: number[], fontSize: number = 12, isBold: boolean = false) => {
       pdf.setTextColor(color[0], color[1], color[2]);
@@ -42,81 +53,49 @@ export const generatePDFReport = async (feedbackData: any, interviewInfo: any) =
       pdf.text(text, x, y);
     };
     
-    // Professional Header Section
-    pdf.setFillColor(headerBgColor[0], headerBgColor[1], headerBgColor[2]);
-    pdf.rect(0, 0, pageWidth, 60, 'F');
+    // Header Section
+    pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    pdf.rect(0, 0, pageWidth, 40, 'F');
     
-    // Candidate info in header
-    addColoredText(interviewInfo?.userName?.toUpperCase() || 'CANDIDATE NAME', 20, 25, [255, 255, 255], 20, true);
-    addColoredText(interviewInfo?.userEmail || 'N/A', 20, 40, [156, 163, 175], 12);
+    addColoredText('Interview Feedback Report', 20, 25, [255, 255, 255], 20, true);
     
-    // Recommendation Badge
-    const recommendation = feedbackData?.feedback?.recommendation || 'No';
-    let badgeText = recommendation === 'Yes' ? 'RECOMMENDED' : recommendation === 'Maybe' ? 'REVIEW' : 'REJECTED';
-    let badgeColor = recommendation === 'Yes' ? passColor : recommendation === 'Maybe' ? [255, 165, 0] : rejectColor;
-    
-    // Badge background
-    pdf.setFillColor(badgeColor[0], badgeColor[1], badgeColor[2]);
-    pdf.roundedRect(pageWidth - 85, 20, 65, 25, 3, 3, 'F');
-    addColoredText(badgeText, pageWidth - 75, 37, [255, 255, 255], 12, true);
-    
-    // Interview title below header
-    addColoredText(interviewInfo?.jobPosition || interviewInfo?.jobTitle || 'Interview Assessment', 20, 75, primaryColor, 18, true);
-    
-    // Candidate Information Section
-    let yPosition = 95;
-    addColoredText('CANDIDATE INFORMATION', 20, yPosition, primaryColor, 14, true);
-    yPosition += 8;
-    
-    // Draw line under section header
-    pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    pdf.setLineWidth(0.5);
-    pdf.line(20, yPosition, pageWidth - 20, yPosition);
+    // Candidate Information
+    let yPosition = 60;
+    addColoredText('Candidate Information', 20, yPosition, primaryColor, 16, true);
     yPosition += 10;
     
-    addColoredText(`Position: ${interviewInfo?.jobPosition || interviewInfo?.jobTitle || 'N/A'}`, 20, yPosition, secondaryColor, 11);
-    yPosition += 7;
-    addColoredText(`Interview Type: ${interviewInfo?.interviewType || 'N/A'}`, 20, yPosition, secondaryColor, 11);
-    yPosition += 7;
-    addColoredText(`Duration: ${interviewInfo?.duration || 'N/A'} minutes`, 20, yPosition, secondaryColor, 11);
-    yPosition += 7;
-    addColoredText(`Assessment Date: ${new Date().toLocaleDateString()}`, 20, yPosition, secondaryColor, 11);
+    addColoredText(`Name: ${interviewInfo?.userName || 'N/A'}`, 20, yPosition, secondaryColor, 12);
+    yPosition += 8;
+    addColoredText(`Email: ${interviewInfo?.userEmail || 'N/A'}`, 20, yPosition, secondaryColor, 12);
+    yPosition += 8;
+    addColoredText(`Position: ${interviewInfo?.jobPosition || interviewInfo?.jobTitle || 'N/A'}`, 20, yPosition, secondaryColor, 12);
+    yPosition += 8;
+    addColoredText(`Interview Type: ${interviewInfo?.interviewType || 'N/A'}`, 20, yPosition, secondaryColor, 12);
+    yPosition += 8;
+    addColoredText(`Duration: ${interviewInfo?.duration || 'N/A'} minutes`, 20, yPosition, secondaryColor, 12);
     yPosition += 15;
     
-    // Technical Score Section
-    addColoredText('TECHNICAL SCORE', 20, yPosition, primaryColor, 14, true);
-    yPosition += 8;
-    
-    // Draw line under section header
-    pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    pdf.line(20, yPosition, pageWidth - 20, yPosition);
-    yPosition += 10;
-    
-    // Get ratings data
-    const ratings = feedbackData?.feedback?.rating;
-    
-    // Comprehensive Assessment Section - All Points Together
-    addColoredText('COMPREHENSIVE ASSESSMENT', 20, yPosition, primaryColor, 14, true);
-    yPosition += 8;
-    
-    // Draw line under section header
-    pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    pdf.line(20, yPosition, pageWidth - 20, yPosition);
-    yPosition += 10;
-    
+    // Overall Score
+    const ratings = feedbackData?.data?.feedback?.rating;
     if (ratings) {
-      // Overall Score
       const values = Object.values(ratings);
       const sum = values.reduce((acc: number, v: any) => acc + (v ?? 0), 0);
       const avgScore = values.length > 0 ? sum / values.length : 0;
-      const scoreColor = avgScore >= 7 ? passColor : avgScore >= 5 ? [255, 165, 0] : rejectColor;
       
-      addColoredText(`● Overall Score: ${avgScore.toFixed(1)}/10`, 20, yPosition, scoreColor, 12, true);
-      yPosition += 8;
+      addColoredText('Overall Performance Score', 20, yPosition, primaryColor, 16, true);
+      yPosition += 10;
       
-      // Individual Category Scores
-      addColoredText('● Category Breakdown:', 20, yPosition, secondaryColor, 12, true);
-      yPosition += 6;
+      // Score circle visualization
+      const scoreText = `${avgScore.toFixed(1)}/10`;
+      addColoredText(scoreText, 20, yPosition, 
+        avgScore >= 7 ? accentColor : avgScore >= 5 ? [255, 165, 0] : [239, 68, 68], 24, true);
+      yPosition += 15;
+    }
+    
+    // Category-wise Scores
+    if (ratings) {
+      addColoredText('Category-wise Performance', 20, yPosition, primaryColor, 16, true);
+      yPosition += 10;
       
       const categories = [
         { name: 'Technical Skills', score: ratings.technicalSkills },
@@ -127,133 +106,149 @@ export const generatePDFReport = async (feedbackData: any, interviewInfo: any) =
       
       categories.forEach((category) => {
         if (category.score !== undefined && category.score !== null) {
-          const categoryColor = category.score >= 7 ? passColor : category.score >= 5 ? [255, 165, 0] : rejectColor;
-          addColoredText(`  - ${category.name}: ${category.score.toFixed(1)}/10`, 25, yPosition, categoryColor, 11);
-          yPosition += 6;
+          addColoredText(`${category.name}:`, 20, yPosition, secondaryColor, 12);
+          
+          // Progress bar
+          const barWidth = 60;
+          const barHeight = 6;
+          const barX = 120;
+          const barY = yPosition - 3;
+          
+          // Background bar
+          pdf.setFillColor(230, 230, 230);
+          pdf.rect(barX, barY, barWidth, barHeight, 'F');
+          
+          // Score bar
+          const scoreWidth = (category.score / 10) * barWidth;
+          const fillColor = category.score >= 7 ? [0, 150, 0] : category.score >= 5 ? [255, 165, 0] : [255, 0, 0];
+          pdf.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
+          pdf.rect(barX, barY, scoreWidth, barHeight, 'F');
+          
+          // Score text
+          addColoredText(`${category.score.toFixed(1)}/10`, barX + barWidth + 5, yPosition, secondaryColor, 10);
+          
+          yPosition += 12;
         }
       });
-      
-      yPosition += 5;
     }
     
-    // Recommendation Points
-    addColoredText('● Recommendation:', 20, yPosition, secondaryColor, 12, true);
-    yPosition += 6;
-    addColoredText(`  Decision: ${recommendation.toUpperCase()}`, 25, yPosition, badgeColor, 11, true);
-    yPosition += 6;
+    // Recommendation Section
+    checkAndAddPage(80);
+    yPosition += 10;
+    addColoredText('Recommendation', 20, yPosition, primaryColor, 18, true);
+    yPosition += 15;
     
-    const recommendationMessage = feedbackData?.feedback?.recommendationMessage || 'No recommendation message available.';
-    const messageLines = pdf.splitTextToSize(recommendationMessage, pageWidth - 65);
+    const recommendation = feedbackData?.data?.feedback?.recommendation || 'No';
+    const recommendationColor = recommendation === 'Yes' ? accentColor : recommendation === 'Maybe' ? [255, 165, 0] : [239, 68, 68];
+    
+    addColoredText(`Decision: ${recommendation.toUpperCase()}`, 20, yPosition, recommendationColor, 14, true);
+    yPosition += 10;
+    
+    const recommendationMessage = feedbackData?.data?.feedback?.recommendationMessage || 'No recommendation message available.';
+    const messageLines = pdf.splitTextToSize(recommendationMessage, pageWidth - 40);
     messageLines.forEach((line: string) => {
-      addColoredText(`  ${line}`, 25, yPosition, secondaryColor, 10);
-      yPosition += 5;
+      addColoredText(line, 20, yPosition, secondaryColor, 11);
+      yPosition += 6;
     });
     
+    // Strengths Section
+    checkAndAddPage(60);
+    yPosition += 10;
+    addColoredText('Key Strengths', 20, yPosition, primaryColor, 16, true);
+    yPosition += 10;
+    
+    const strengths = feedbackData?.data?.feedback?.strengths || [];
+    if (strengths.length > 0) {
+      strengths.forEach((strength: string) => {
+        const strengthLines = pdf.splitTextToSize(`• ${strength}`, pageWidth - 40);
+        strengthLines.forEach((line: string) => {
+          addColoredText(line, 20, yPosition, secondaryColor, 11);
+          yPosition += 6;
+        });
+      });
+    } else {
+      addColoredText('• No specific strengths identified', 20, yPosition, secondaryColor, 11);
+      yPosition += 6;
+    }
+    
+    // Areas for Improvement Section
+    checkAndAddPage(60);
+    yPosition += 10;
+    addColoredText('Areas for Improvement', 20, yPosition, primaryColor, 16, true);
+    yPosition += 10;
+    
+    const improvements = feedbackData?.data?.feedback?.improvements || [];
+    if (improvements.length > 0) {
+      improvements.forEach((improvement: string) => {
+        const improvementLines = pdf.splitTextToSize(`• ${improvement}`, pageWidth - 40);
+        improvementLines.forEach((line: string) => {
+          addColoredText(line, 20, yPosition, secondaryColor, 11);
+          yPosition += 6;
+        });
+      });
+    } else {
+      addColoredText('• No specific improvement areas identified', 20, yPosition, secondaryColor, 11);
+      yPosition += 6;
+    }
+    
+    // Technical Assessment Section
+    checkAndAddPage(80);
+    yPosition += 10;
+    addColoredText('Technical Assessment', 20, yPosition, primaryColor, 16, true);
+    yPosition += 10;
+    
+    const technicalAssessment = feedbackData?.data?.feedback?.technicalAssessment || 'No technical assessment available.';
+    const technicalLines = pdf.splitTextToSize(technicalAssessment, pageWidth - 40);
+    technicalLines.forEach((line: string) => {
+      addColoredText(line, 20, yPosition, secondaryColor, 11);
+      yPosition += 6;
+    });
+    
+    // Communication Assessment Section
+    checkAndAddPage(80);
+    yPosition += 10;
+    addColoredText('Communication Assessment', 20, yPosition, primaryColor, 16, true);
+    yPosition += 10;
+    
+    const communicationAssessment = feedbackData?.data?.feedback?.communicationAssessment || 'No communication assessment available.';
+    const communicationLines = pdf.splitTextToSize(communicationAssessment, pageWidth - 40);
+    communicationLines.forEach((line: string) => {
+      addColoredText(line, 20, yPosition, secondaryColor, 11);
+      yPosition += 6;
+    });
+    
+    // Confidence Level Section
+    checkAndAddPage(40);
+    yPosition += 10;
+    addColoredText('Assessment Confidence', 20, yPosition, primaryColor, 16, true);
+    yPosition += 10;
+    
+    const confidence = feedbackData?.data?.feedback?.overallConfidence || 0;
+    const confidenceText = confidence >= 90 ? 'Very High' : confidence >= 70 ? 'High' : confidence >= 50 ? 'Moderate' : 'Low';
+    const confidenceColor = confidence >= 70 ? accentColor : confidence >= 50 ? [255, 165, 0] : [239, 68, 68];
+    
+    addColoredText(`Confidence Level: ${confidence}% (${confidenceText})`, 20, yPosition, confidenceColor, 12);
     yPosition += 8;
     
-    // Key Strengths Points
-    const strengths = feedbackData?.feedback?.strengths || [];
-    if (strengths.length > 0) {
-      addColoredText('● Key Strengths:', 20, yPosition, secondaryColor, 12, true);
-      yPosition += 6;
-      
-      strengths.forEach((strength: string) => {
-        const strengthLines = pdf.splitTextToSize(strength, pageWidth - 65);
-        strengthLines.forEach((line: string, index: number) => {
-          const prefix = index === 0 ? '  -' : '   ';
-          addColoredText(`${prefix} ${line}`, 25, yPosition, passColor, 10);
-          yPosition += 5;
-        });
-      });
-      yPosition += 5;
-    }
+    // Confidence bar
+    const confidenceBarWidth = 100;
+    const confidenceBarHeight = 8;
+    const confidenceBarX = 20;
+    const confidenceBarY = yPosition - 3;
     
-    // Areas for Improvement Points
-    const improvements = feedbackData?.feedback?.improvements || [];
-    if (improvements.length > 0) {
-      addColoredText('● Areas for Improvement:', 20, yPosition, secondaryColor, 12, true);
-      yPosition += 6;
-      
-      improvements.forEach((improvement: string) => {
-        const improvementLines = pdf.splitTextToSize(improvement, pageWidth - 65);
-        improvementLines.forEach((line: string, index: number) => {
-          const prefix = index === 0 ? '  -' : '   ';
-          addColoredText(`${prefix} ${line}`, 25, yPosition, [255, 165, 0], 10);
-          yPosition += 5;
-        });
-      });
-      yPosition += 5;
-    }
+    pdf.setFillColor(230, 230, 230);
+    pdf.rect(confidenceBarX, confidenceBarY, confidenceBarWidth, confidenceBarHeight, 'F');
     
-    // Actionable Recommendations Points
-    const recommendationsList: string[] = [];
+    const confidenceWidth = (confidence / 100) * confidenceBarWidth;
+    pdf.setFillColor(confidenceColor[0], confidenceColor[1], confidenceColor[2]);
+    pdf.rect(confidenceBarX, confidenceBarY, confidenceWidth, confidenceBarHeight, 'F');
     
-    if (ratings?.technicalSkills && ratings.technicalSkills < 7) {
-      recommendationsList.push(
-        `Technical: ${ratings.technicalSkills < 4 ? 'Enroll in comprehensive technical training programs' : 'Focus on advanced technical concepts and open-source contributions'}`
-      );
-    }
-    
-    if (ratings?.communication && ratings.communication < 7) {
-      recommendationsList.push(
-        `Communication: ${ratings.communication < 4 ? 'Join public speaking workshops' : 'Participate in team meetings and technical discussions'}`
-      );
-    }
-    
-    if (ratings?.problemSolving && ratings.problemSolving < 7) {
-      recommendationsList.push(
-        `Problem Solving: ${ratings.problemSolving < 4 ? 'Practice algorithmic problems daily' : 'Work on complex real-world projects'}`
-      );
-    }
-    
-    if (ratings?.experience && ratings.experience < 7) {
-      recommendationsList.push(
-        `Experience: ${ratings.experience < 4 ? 'Seek internships or freelance projects' : 'Take on leadership roles in projects'}`
-      );
-    }
-    
-    if (recommendationsList.length > 0) {
-      addColoredText('● Actionable Recommendations:', 20, yPosition, secondaryColor, 12, true);
-      yPosition += 6;
-      
-      recommendationsList.forEach((rec: string) => {
-        const recLines = pdf.splitTextToSize(rec, pageWidth - 65);
-        recLines.forEach((line: string, index: number) => {
-          const prefix = index === 0 ? '  →' : '   ';
-          addColoredText(`${prefix} ${line}`, 25, yPosition, primaryColor, 10);
-          yPosition += 5;
-        });
-      });
-      yPosition += 5;
-    }
-    
-    // Next Steps Points
-    const avgScore = ratings ? Object.values(ratings).reduce((acc: number, v: any) => acc + (v ?? 0), 0) / Object.values(ratings).length : 0;
-    
-    addColoredText('● Recommended Next Steps:', 20, yPosition, secondaryColor, 12, true);
-    yPosition += 6;
-    
-    const nextSteps = [
-      'Review detailed feedback and identify top 3 priority areas',
-      'Create a 30-60-90 day development plan',
-      avgScore >= 7 
-        ? 'Prepare for senior/advanced role interviews'
-        : avgScore >= 5
-        ? 'Build intermediate skills and gain practical experience'
-        : 'Focus on foundational skills before reapplying'
-    ];
-    
-    nextSteps.forEach((step, index) => {
-      addColoredText(`  ${index + 1}. ${step}`, 25, yPosition, accentColor, 10);
-      yPosition += 5;
-    });
-    
-    yPosition += 10;
+    yPosition += 15;
     
     // Footer
     const footerY = pageHeight - 20;
-    addColoredText(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, 20, footerY, secondaryColor, 9);
-    addColoredText('InterviewX - AI Interview Platform', pageWidth - 80, footerY, secondaryColor, 9);
+    addColoredText(`Generated on ${new Date().toLocaleDateString()}`, 20, footerY, secondaryColor, 10);
+    addColoredText('InterviewX - AI Interview Platform', pageWidth - 80, footerY, secondaryColor, 10);
     
     // Save the PDF
     const fileName = `interview-feedback-${interviewInfo?.userName?.replace(/\s+/g, '-').toLowerCase() || 'candidate'}-${Date.now()}.pdf`;
