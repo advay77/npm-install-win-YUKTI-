@@ -4,7 +4,7 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { StructuredOutputParser } from "@langchain/core/output_parsers";
 import { z } from "zod";
 import { PromptTemplate } from "@langchain/core/prompts";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import axios from 'axios';
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
@@ -35,13 +35,6 @@ Return ONLY raw JSON. Do NOT include markdown code blocks (like \`\`\`json), exp
 
 {format_instructions}
 `);
-
-const llm = new ChatGoogleGenerativeAI({
-  apiKey: process.env.NEXT_PUBLIC_GOOGLE_GENAI_KEY,
-  model: "gemini-1.5-flash",
-  temperature: 0.3,
-  maxOutputTokens: 800,
-});
 
 // --- Supabase admin client for signing URLs ---
 const supabaseAdmin = createClient(
@@ -123,11 +116,37 @@ export async function POST(req: NextRequest) {
       format_instructions: parser.getFormatInstructions(),
     };
 
-    // Invoke LLM directly
-    const rawResponse = await llm.invoke(await promptTemplate.format(input));
-    const rawText = typeof rawResponse.content === 'string'
-      ? rawResponse.content
-      : JSON.stringify(rawResponse.content);
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
+      console.error('[resume-score] OpenRouter API KEY MISSING in process.env');
+      return NextResponse.json({ error: "OpenRouter API Key not found in local environment." }, { status: 500 });
+    }
+    console.log('[resume-score] API Key loaded (first 4 chars):', openRouterApiKey.substring(0, 4));
+
+    let rawText = "";
+    try {
+      const formattedPrompt = await promptTemplate.format(input);
+      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: formattedPrompt }],
+        temperature: 0.3,
+        max_tokens: 800
+      }, {
+        headers: {
+          'Authorization': `Bearer ${openRouterApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      rawText = response.data.choices[0].message.content;
+      console.log("[resume-score] OpenRouter RESPONSE:", rawText);
+    } catch (llmErr: any) {
+      console.error('[resume-score] OpenRouter Error:', llmErr);
+      return NextResponse.json(
+        { error: `AI Service Error: ${llmErr.message || "Failed to generate content"}` },
+        { status: 502 }
+      );
+    }
 
     // Clean markdown code blocks
     let cleanedText = rawText.trim();

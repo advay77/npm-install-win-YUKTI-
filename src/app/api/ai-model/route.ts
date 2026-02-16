@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from "next/server";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StructuredOutputParser } from "@langchain/core/output_parsers";
 import { z } from "zod";
+import axios from 'axios';
 
 // Branding context to ensure the correct project name is used by the LLM
 const PROJECT_NAME = process.env.NEXT_PUBLIC_PROJECT_NAME || "INTERVIEWX";
@@ -96,38 +96,33 @@ export async function POST(request: Request) {
       format_instructions: parser.getFormatInstructions(),
     };
 
-    const geminiApiKey = process.env.NEXT_PUBLIC_GOOGLE_GENAI_KEY;
-    if (!geminiApiKey) {
-      console.error('[ai-model] API KEY MISSING in process.env');
-      return NextResponse.json({ isError: true, error: "API Key not found in local environment." }, { status: 500 });
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
+      console.error('[ai-model] OpenRouter API KEY MISSING in process.env');
+      return NextResponse.json({ isError: true, error: "OpenRouter API Key not found in local environment." }, { status: 500 });
     }
-    console.log('[ai-model] API Key loaded (first 4 chars):', geminiApiKey.substring(0, 4));
-
-    // Some environments/SDKs prefer GOOGLE_API_KEY instead of passing it explicitly
-    process.env.GOOGLE_API_KEY = geminiApiKey;
-
-    // Use official SDK which is more robust for localhost
-    const { GoogleGenerativeAI } = require("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    console.log('[ai-model] API Key loaded (first 4 chars):', openRouterApiKey.substring(0, 4));
 
     let rawText = "";
     try {
       const formattedPrompt = await promptTemplate.format(input);
-      const result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: formattedPrompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-          responseMimeType: "application/json",
-        },
+      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: formattedPrompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+        response_format: { type: "json_object" }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${openRouterApiKey}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      const response = await result.response;
-      rawText = response.text();
-      console.log("[ai-model] SDK RESPONSE:", rawText);
+      rawText = response.data.choices[0].message.content;
+      console.log("[ai-model] OpenRouter RESPONSE:", rawText);
     } catch (llmErr: any) {
-      console.error('[ai-model] SDK Error:', llmErr);
+      console.error('[ai-model] OpenRouter Error:', llmErr);
       return NextResponse.json(
         { isError: true, error: `AI Service Error: ${llmErr.message || "Failed to generate content"}` },
         { status: 502 }

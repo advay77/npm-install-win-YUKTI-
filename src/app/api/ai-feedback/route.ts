@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from "next/server";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StructuredOutputParser } from "@langchain/core/output_parsers";
 import { z } from "zod";
+import axios from 'axios';
 
 interface FeedbackRequest {
   conversation: { type: "user" | "assistant"; content: string }[];
@@ -96,13 +96,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const llm = new ChatGoogleGenerativeAI({
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_GENAI_KEY,
-      model: "gemini-1.5-flash",
-      temperature: 0.3,
-      maxOutputTokens: 1500,
-    });
-
     const conversationString = conversation
       .map((m) => `${m.type === "user" ? "User" : "Assistant"}: ${m.content} `)
       .join("\n");
@@ -112,11 +105,37 @@ export async function POST(request: Request) {
       format_instructions: parser.getFormatInstructions(),
     };
 
-    // Invoke LLM directly
-    const rawResponse = await llm.invoke(await promptTemplate.format(input));
-    const rawText = typeof rawResponse.content === 'string'
-      ? rawResponse.content
-      : JSON.stringify(rawResponse.content);
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
+      console.error('[ai-feedback] OpenRouter API KEY MISSING in process.env');
+      return NextResponse.json({ isError: true, error: "OpenRouter API Key not found in local environment." }, { status: 500 });
+    }
+    console.log('[ai-feedback] API Key loaded (first 4 chars):', openRouterApiKey.substring(0, 4));
+
+    let rawText = "";
+    try {
+      const formattedPrompt = await promptTemplate.format(input);
+      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: formattedPrompt }],
+        temperature: 0.3,
+        max_tokens: 1500
+      }, {
+        headers: {
+          'Authorization': `Bearer ${openRouterApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      rawText = response.data.choices[0].message.content;
+      console.log("[ai-feedback] OpenRouter RESPONSE:", rawText);
+    } catch (llmErr: any) {
+      console.error('[ai-feedback] OpenRouter Error:', llmErr);
+      return NextResponse.json(
+        { isError: true, error: `AI Service Error: ${llmErr.message || "Failed to generate content"}` },
+        { status: 502 }
+      );
+    }
 
     // Clean JSON using Regex
     let cleanedText = rawText.trim();
