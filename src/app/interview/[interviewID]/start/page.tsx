@@ -80,15 +80,17 @@ const StartInterview = () => {
   const [activeUser, setActiveUser] = useState<boolean>(false);
   const [callFinished, setCallFinished] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [seconds, setSeconds] = useState(0);
+  const [feedback, setFeedback] = useState<any>(null);
   const [isCallActive, setIsCallActive] = useState(false);
   const [hasCallStartToast, setHasCallStartToast] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<string>("");
   const [generateLoading, setGenerateLoading] = useState<boolean>(false);
+  const [hasAcknowledgedInstructions, setHasAcknowledgedInstructions] = useState(false);
+  const [showPreInterviewModal, setShowPreInterviewModal] = useState(false);
+  const [hasAttempted, setHasAttempted] = useState<boolean>(false);
+  const [seconds, setSeconds] = useState<number>(0);
   const [hasStarted, setHasStarted] = useState(false);
-  const [hasAttempted, setHasAttempted] = useState(false);
-  const [feedbackData, setFeedbackData] = useState<any>(null);
 
   const [vapi] = useState(() => new Vapi(VAPI_PUBLIC_KEY));
 
@@ -104,7 +106,9 @@ const StartInterview = () => {
   const [showWarning, setShowWarning] = useState<boolean>(false);
   const [suspiciousActivities, setSuspiciousActivities] = useState<string[]>([]);
   const [warningCount, setWarningCount] = useState<number>(0);
+  const [warnedCategories, setWarnedCategories] = useState<Set<string>>(new Set());
   const cheatingDetectionRef = useRef<NodeJS.Timeout | null>(null);
+  const previousImageDataRef = useRef<ImageData | null>(null);
 
   // Clean up cheating detection on unmount
   useEffect(() => {
@@ -123,15 +127,19 @@ const StartInterview = () => {
   }, [interviewInfo?.userName, interviewInfo?.userEmail, interviewInfo?.interviewID, router, params]);
 
   useEffect(() => {
-    const el = transcriptRef.current;
-    if (el) {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    if (!hasAcknowledgedInstructions) {
+      setShowPreInterviewModal(true);
     }
-  }, [messages]);
+  }, [hasAcknowledgedInstructions]);
 
   // Start the interview only after explicit user interaction
   // to satisfy browser audio/mic permission requirements.
   const handleStart = async () => {
+    if (!hasAcknowledgedInstructions) {
+      toast.error("Please acknowledge the pre-interview instructions first.");
+      setShowPreInterviewModal(true);
+      return;
+    }
     if (hasStarted) return;
     try {
       // Prevent multiple attempts from the same email for this interview
@@ -445,7 +453,6 @@ Remember: You are assessing both technical competence and communication skills. 
         setSeconds((prev) => prev + 1);
       }, 1000);
     } else {
-      setSeconds(0);
       if (interval) clearInterval(interval);
     }
 
@@ -534,54 +541,21 @@ Remember: You are assessing both technical competence and communication skills. 
       
       // Basic motion detection and object analysis
       const suspiciousActivity = analyzeFrameForCheating(imageData);
-      
       if (suspiciousActivity) {
         handleSuspiciousActivity(suspiciousActivity);
       }
+      
+      // Check for movement
+      if (previousImageDataRef.current) {
+        const motionRatio = detectMotion(previousImageDataRef.current, imageData);
+        if (motionRatio > 0.05) { // threshold for 5% pixels changed significantly
+          handleSuspiciousActivity("movement");
+        }
+      }
+      previousImageDataRef.current = imageData;
     } catch (error) {
       console.error('Error in cheating detection:', error);
     }
-  };
-
-  const analyzeFrameForCheating = (imageData: ImageData): string | null => {
-    const data = imageData.data;
-    let brightness = 0;
-    let motionPixels = 0;
-    let faceDetected = false;
-    
-    // Simple brightness analysis (for phone screens, papers, etc.)
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      brightness += (r + g + b) / 3;
-      
-      // Detect bright spots (potential phone screens)
-      if (r > 200 && g > 200 && b > 200) {
-        motionPixels++;
-      }
-    }
-    
-    const avgBrightness = brightness / (data.length / 4);
-    const brightPixelRatio = motionPixels / (data.length / 4);
-    
-    // Check for suspicious conditions
-    if (brightPixelRatio > 0.1) {
-      return "Bright screen detected - possible phone or device usage";
-    }
-    
-    if (avgBrightness < 30) {
-      return "Very low lighting - suspicious environment";
-    }
-    
-    // Check if face is visible (basic detection)
-    // In a real implementation, you'd use face detection API
-    const centerRegion = getCenterRegionBrightness(data, imageData.width, imageData.height);
-    if (centerRegion < 20) {
-      return "No face detected in camera view";
-    }
-    
-    return null;
   };
 
   const getCenterRegionBrightness = (data: Uint8ClampedArray, width: number, height: number): number => {
@@ -602,38 +576,110 @@ Remember: You are assessing both technical competence and communication skills. 
     return centerBrightness / (regionSize * regionSize * 4);
   };
 
-  const handleSuspiciousActivity = (activity: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    const logEntry = `${timestamp}: ${activity}`;
-    
-    setSuspiciousActivities(prev => [...prev.slice(-4), logEntry]);
-    setWarningCount(prev => prev + 1);
-    
-    // Show warning to candidate
-    showWarningToCandidate(activity);
-    
-    // Log for review
-    console.warn('Suspicious activity detected:', logEntry);
-    
-    // End interview after 3 warnings
-    if (warningCount >= 2) {
-      endInterviewDueToCheating();
+  const analyzeFrameForCheating = (imageData: ImageData): string | null => {
+    const data = imageData.data;
+    let brightness = 0;
+    let motionPixels = 0;
+    let faceDetected = false;
+
+    // Simple brightness analysis (for phone screens, papers, etc.)
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      brightness += (r + g + b) / 3;
+
+      // Detect bright spots (potential phone screens)
+      if (r > 200 && g > 200 && b > 200) {
+        motionPixels++;
+      }
+    }
+
+    const avgBrightness = brightness / (data.length / 4);
+    const brightPixelRatio = motionPixels / (data.length / 4);
+
+    // Check for suspicious conditions
+    if (brightPixelRatio > 0.1) {
+      return "bright_screen";
+    }
+
+    if (avgBrightness < 30) {
+      return "low_light";
+    }
+
+    // Check if face is visible (basic detection)
+    // In a real implementation, you'd use face detection API
+    const centerRegion = getCenterRegionBrightness(data, imageData.width, imageData.height);
+    if (centerRegion < 20) {
+      return "no_face";
+    }
+
+    return null;
+  };
+
+  const detectMotion = (prev: ImageData, curr: ImageData): number => {
+    let changedPixels = 0;
+    const threshold = 30; // difference threshold for color change
+    for (let i = 0; i < prev.data.length; i += 4) {
+      const rDiff = Math.abs(prev.data[i] - curr.data[i]);
+      const gDiff = Math.abs(prev.data[i + 1] - curr.data[i + 1]);
+      const bDiff = Math.abs(prev.data[i + 2] - curr.data[i + 2]);
+      if (rDiff > threshold || gDiff > threshold || bDiff > threshold) {
+        changedPixels++;
+      }
+    }
+    return changedPixels / (prev.data.length / 4);
+  };
+
+  const handleSuspiciousActivity = (category: string) => {
+    if (!warnedCategories.has(category)) {
+      setWarnedCategories(prev => new Set(prev).add(category));
+
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = `${timestamp}: ${category}`;
+      setSuspiciousActivities(prev => [...prev.slice(-4), logEntry]);
+
+      setWarningCount(prev => prev + 1);
+
+      // Show warning to candidate with specific message
+      showWarningToCandidate(category);
+
+      // Log for review
+      console.warn('Suspicious activity detected:', logEntry);
+
+      // End interview after 3 warnings
+      if (warningCount + 1 >= 3) {
+        endInterviewDueToCheating();
+      }
+    } else {
+      // Already warned for this category, log but no new warning
+      console.log('Suspicious activity detected again:', category);
     }
   };
 
-  const showWarningToCandidate = (activity: string) => {
-    setWarningMessage(`⚠️ Warning: ${activity}. Please ensure you are visible and no unauthorized materials are present.`);
+  const showWarningToCandidate = (category: string) => {
+    let message = "⚠️ Warning: Suspicious activity detected. Please ensure you are visible and no unauthorized materials are present.";
+    switch (category) {
+      case "bright_screen":
+        message = "⚠️ Warning: Bright screen detected - possible phone or device usage. Please remove any unauthorized devices.";
+        break;
+      case "low_light":
+        message = "⚠️ Warning: Low lighting detected - ensure proper lighting for visibility.";
+        break;
+      case "no_face":
+        message = "⚠️ Warning: No face detected in camera view. Please position yourself properly.";
+        break;
+      case "movement":
+        message = "⚠️ Warning: Movement detected - ensure you remain still during the interview.";
+        break;
+    }
+    setWarningMessage(message);
     setShowWarning(true);
     
     // Auto-hide warning after 5 seconds
     setTimeout(() => {
       setShowWarning(false);
     }, 5000);
-    
-    toast.warning("Interview Warning", {
-      description: activity,
-      duration: 5000,
-    });
   };
 
   const endInterviewDueToCheating = () => {
@@ -673,28 +719,34 @@ Remember: You are assessing both technical competence and communication skills. 
       console.log("✅ Feedback Result From GROQ LLM:", res.data);
       
       // Store feedback data for PDF generation
-      setFeedbackData(res.data);
+      setFeedback(res.data);
+
+      const insertData = {
+        userName: interviewInfo.userName,
+        userEmail: interviewInfo.userEmail,
+        interview_id: interviewInfo.interviewID,
+        feedback: res.data,
+        recommended: "No",
+        acceptResume: interviewInfo.acceptResume || false,
+        organization: interviewInfo.organization || "",
+        resumeURL: interviewInfo.resumeURL || null,
+      };
+
+      console.log("Inserting data into database:", insertData);
 
       const { data, error } = await supabase
         .from("interview-details")
-        .insert([
-          {
-            userName: interviewInfo.userName,
-            userEmail: interviewInfo.userEmail,
-            interview_id: interviewInfo.interviewID,
-            feedback: res.data,
-            recomended: "No",
-            acceptResume: interviewInfo.acceptResume || false,
-            organization: interviewInfo.organization || "",
-            resumeURL: interviewInfo.resumeURL || null,
-          },
-        ])
+        .insert([insertData])
         .select();
 
       if (error) {
         console.error("❌ Database Insert Error:", error);
+        console.error("Error details:", error.details);
+        console.error("Error hint:", error.hint);
+        console.error("Error message:", error.message);
+        console.error("Data attempted to insert:", insertData);
         toast.error("Failed to save interview feedback", {
-          description: error.message,
+          description: error.message || "Unknown database error",
         });
         return;
       }
@@ -702,7 +754,7 @@ Remember: You are assessing both technical competence and communication skills. 
       console.log("✅ Interview Details Saved:", data);
       
       // Generate PDF report
-      await generatePDFReport(feedbackData, interviewInfo);
+      await generatePDFReport(feedback, interviewInfo);
       
       toast.success("Interview feedback saved successfully!", {
         description: (
@@ -826,13 +878,43 @@ Remember: You are assessing both technical competence and communication skills. 
 
   //   -----------------------------
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-3 py-3 text-slate-50 overflow-hidden flex flex-col">
+    <>
+      {showPreInterviewModal && (
+        <Dialog open={showPreInterviewModal} onOpenChange={(open) => {
+          if (!open && !hasAcknowledgedInstructions) return; // Prevent closing without acknowledgment
+          setShowPreInterviewModal(open);
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Pre-Interview Instructions</DialogTitle>
+              <div className="text-left text-muted-foreground text-sm">
+                Before starting your interview, please ensure:
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Share your screen for monitoring purposes.</li>
+                  <li>Sit in a proper environment with good lighting and no distractions.</li>
+                  <li>Remove any unauthorized materials or foreign objects.</li>
+                  <li>Ensure your camera and microphone are enabled and working.</li>
+                </ul>
+              </div>
+            </DialogHeader>
+            <div className="flex justify-end">
+              <Button onClick={() => {
+                setHasAcknowledgedInstructions(true);
+                setShowPreInterviewModal(false);
+              }}>
+                I Acknowledge and Continue
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-3 py-3 text-slate-50 overflow-hidden flex flex-col">
       {/* Warning Banner */}
-      {showWarning && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg animate-pulse">
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg transition-opacity duration-300 ${showWarning ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-3 w-3 bg-white rounded-full animate-ping" />
+              <div className="h-3 w-3 bg-white rounded-full" />
               <p className="font-semibold text-sm">{warningMessage}</p>
             </div>
             <div className="text-xs font-medium">
@@ -840,7 +922,6 @@ Remember: You are assessing both technical competence and communication skills. 
             </div>
           </div>
         </div>
-      )}
       
       <div className="mx-auto flex max-w-7xl flex-col gap-2 flex-1 w-full min-h-0">
         <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur shrink-0">
@@ -1059,9 +1140,9 @@ Remember: You are assessing both technical competence and communication skills. 
                 <Button onClick={downloadTranscription} className="flex w-full items-center justify-center gap-1.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 text-xs font-bold text-white shadow-lg hover:from-sky-400 hover:via-indigo-400 hover:to-fuchsia-400 h-9">
                   Download Transcription <LuDownload className="h-3.5 w-3.5" />
                 </Button>
-                {feedbackData && (
+                {feedback && (
                   <Button 
-                    onClick={() => generatePDFReport(feedbackData, interviewInfo)}
+                    onClick={() => generatePDFReport(feedback, interviewInfo)}
                     className="flex w-full items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-xs font-bold text-white shadow-lg hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 h-9"
                   >
                     Download PDF Report <LuDownload className="h-3.5 w-3.5" />
@@ -1078,9 +1159,9 @@ Remember: You are assessing both technical competence and communication skills. 
               <DialogTitle className="flex items-center justify-center gap-3 text-center text-2xl font-bold font-sora">
                 Congratulations! <LucideCheckCircle className="h-7 w-7 text-white" />
               </DialogTitle>
-              <DialogDescription className="text-center text-base font-medium text-slate-100">
+              <div className="text-center text-base font-medium text-slate-100">
                 {(interviewInfo?.userName ?? "Candidate")}, your interview has ended successfully
-              </DialogDescription>
+              </div>
               <DialogClose className="absolute right-4 top-4 rounded-md text-[#005eff] transition-colors duration-150 hover:text-[#0047cc]">
                 <LuX className="h-5 w-5" />
               </DialogClose>
@@ -1108,9 +1189,9 @@ Remember: You are assessing both technical competence and communication skills. 
                 >
                   Close
                 </Button>
-                {feedbackData && (
+                {feedback && (
                   <Button
-                    onClick={() => generatePDFReport(feedbackData, interviewInfo)}
+                    onClick={() => generatePDFReport(feedback, interviewInfo)}
                     className="h-11 w-full font-semibold bg-gradient-to-r from-sky-500 to-indigo-500 text-white hover:from-sky-400 hover:to-indigo-400 flex items-center gap-2"
                   >
                     <LuDownload className="h-4 w-4" />
@@ -1123,7 +1204,8 @@ Remember: You are assessing both technical competence and communication skills. 
         </Dialog>
       </div>
     </div>
-  );
+  </>
+);
 };
 
 export default StartInterview;
