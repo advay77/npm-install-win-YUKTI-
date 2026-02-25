@@ -1,194 +1,174 @@
-<!--
-  Vibrant, animated README for INTERVIEWX.
-  Replace placeholder images/assets (assets/demo.gif, assets/screenshot-1.png) with real files from your repo.
--->
+🚀 InterviewX – AI Powered Mock Interview Platform
 
-<!-- Animated SVG hero (renders on GitHub) -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 240" width="100%" height="180" preserveAspectRatio="xMidYMid slice" role="img" aria-label="INTERVIEWX banner">
-  <defs>
-    <linearGradient id="grad" x1="0" x2="1">
-      <stop offset="0%" stop-color="#ff8a00">
-        <animate attributeName="stop-color" values="#ff8a00;#e52e71;#7b2ff7;#00c6ff;#ff8a00" dur="8s" repeatCount="indefinite" />
-      </stop>
-      <stop offset="100%" stop-color="#7b2ff7">
-        <animate attributeName="stop-color" values="#7b2ff7;#00c6ff;#e52e71;#ff8a00;#7b2ff7" dur="8s" repeatCount="indefinite" />
-      </stop>
-    </linearGradient>
-    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
+Crack Interviews with AI. Practice Smart. Improve Faster.
 
-  <rect width="1200" height="240" fill="#071026"/>
-  <g transform="translate(60,40)">
-    <text x="0" y="80" font-family="Inter, Roboto, sans-serif" font-size="64" font-weight="800" fill="url(#grad)" filter="url(#softGlow)" style="letter-spacing: -1px">
-      INTERVIEWX
-    </text>
-    <text x="0" y="120" font-family="Inter, Roboto, sans-serif" font-size="20" fill="#9fb6d8" opacity="0.95">
-      Discover, audition, and hire the perfect voice talent — fast, smart, and beautifully designed.
-    </text>
-  </g>
-</svg>
+InterviewX is an AI-powered mock interview platform designed to help students and professionals prepare for technical and HR interviews through real-time AI-generated questions, intelligent evaluation, and detailed performance feedback.
 
-<!-- Badges -->
-<p align="center">
-  <a href="https://github.com/syedmohammadaquib/INTERVIEWX/actions"><img src="https://img.shields.io/github/workflow/status/syedmohammadaquib/INTERVIEWX/CI?label=build&logo=github&color=blue" alt="build status"></a>
-  <img src="https://img.shields.io/github/issues/syedmohammadaquib/INTERVIEWX?color=orange" alt="issues">
-  <img src="https://img.shields.io/github/license/syedmohammadaquib/INTERVIEWX?color=green" alt="license">
-  <img src="https://img.shields.io/badge/stack-Modern--Web-purple" alt="tech stack">
-</p>
+🌟 Vision
 
----
+To make interview preparation accessible, personalized, and data-driven using AI.
 
-Table of contents
-- About
-- Demo
-- Key features
-- Tech / Architecture
-- Quick start
-- Environment & configuration
-- Screenshots
-- Contributing
-- Roadmap
-- License & Contact
+🎯 Problem Statement
 
----
+Students don’t get real interview experience before placements
 
-About
------
-INTERVIEWX is a beautiful, modern (web + mobile-ready) platform concept to help producers, agencies, and startups find and hire professional voice talent quickly. It focuses on fast discovery, audition management, transparent rates, and clean profiles with audio demos and sample reels.
+No personalized feedback after practice
 
-This README provides:
-- A colorful, animated introduction
-- Clear setup & development instructions
-- UX-focused usage and contribution guidance
+Lack of structured preparation
 
-Demo
-----
-> Replace assets/demo.gif with a real interactive demo GIF or link to a live deployment.
+Fear & low confidence during real interviews
 
-![Demo placeholder](assets/demo.gif)
+InterviewX solves this by simulating real interview environments using AI.
 
-Key features
-------------
-- 🎙️ Talent discovery: browse voice artists, filter by language, style, gender, availability
-- ▶️ Instant audition player: play high-quality sample reels and audition submissions
-- 📝 Profiles & portfolios: bios, experience, rates, tags, and downloadable demos
-- 📩 Messaging & invites: invite actors to audition & manage responses
-- 💳 Payments & bookings (optional): integrate payment gateways and contracts
-- ⚡ Fast search & smart matching (tags/skills/AI-assisted suggestions)
+🧠 Key Features
+🎤 1. AI Mock Interviews
 
-Tech / Architecture
--------------------
-This project is organized into frontend and backend boundaries (example):
-- Frontend: React / Next.js (SPA/SSR) with Tailwind / Styled Components for vibrant UI
-- Backend: Node.js + Express or NestJS
-- Database: PostgreSQL / MongoDB (for profiles, auditions, and messages)
-- Storage: S3-compatible storage for audio files
-- CI / CD: GitHub Actions (badges above)
-> Adapt stacks to your actual repo. Replace placeholders with the specific tech used.
+Role-based question generation
 
-Look & Feel / Design notes
---------------------------
-- Colors: warm gradient accents (orange → pink → purple → cyan) on a deep navy background to make audio waveforms and avatars pop.
-- Typography: Inter / System fonts for clarity and accessibility.
-- Micro-interactions: subtle hover elevation, pulse on new audition invites, animated playback bars for audio.
-- Accessibility: keyboard focus states, alt text on audio thumbnails, and proper ARIA labels for players.
+Domain-specific interviews (Frontend, Backend, DSA, HR, etc.)
 
-Quick start
------------
-1. Clone the repo
-```bash
-git clone https://github.com/syedmohammadaquib/INTERVIEWX.git
-cd INTERVIEWX
-```
+Dynamic difficulty adjustment
 
-2. Install (example monorepo with frontend & backend)
-```bash
-# from repo root (adjust if project is mono or split)
-# frontend
-cd frontend
+📊 2. Smart Evaluation
+
+AI-based answer analysis
+
+Technical accuracy scoring
+
+Communication & clarity rating
+
+Strength & weakness breakdown
+
+📝 3. Resume-Based Questioning
+
+Upload resume
+
+AI generates personalized questions
+
+Project-specific cross questioning
+
+📈 4. Performance Analytics
+
+Track improvement over time
+
+Score history
+
+Skill-wise insights
+
+🤖 5. Real-time Feedback
+
+Instant improvement suggestions
+
+Better answer examples
+
+Confidence boosting tips
+
+🏗️ Tech Stack
+Frontend
+
+React.js
+
+Tailwind CSS
+
+Axios
+
+Backend
+
+Node.js
+
+Express.js
+
+Database
+
+MongoDB
+
+AI Integration
+
+OpenAI API / LLM Integration
+
+Authentication
+
+JWT Authentication
+
+📂 Project Structure
+InterviewX/
+│
+├── client/          # Frontend (React)
+├── server/          # Backend (Node + Express)
+├── models/          # MongoDB Schemas
+├── routes/          # API Routes
+├── controllers/     # Business Logic
+└── README.md
+⚙️ Installation & Setup
+1️⃣ Clone the Repository
+git clone https://github.com/yourusername/InterviewX.git
+cd InterviewX
+2️⃣ Install Dependencies
+Backend
+cd server
 npm install
-
-# backend
-cd ../backend
+Frontend
+cd client
 npm install
-```
+3️⃣ Setup Environment Variables
 
-3. Run in development
-```bash
-# start backend (example)
-cd backend
-npm run dev
+Create .env file inside server/:
 
-# start frontend (example)
-cd ../frontend
-npm run dev
-```
+PORT=5000
+MONGO_URI=your_mongodb_connection
+JWT_SECRET=your_secret_key
+OPENAI_API_KEY=your_openai_key
+4️⃣ Run the Project
+Backend
+npm start
+Frontend
+npm start
+🔐 Security Features
 
-4. Open the app
-- Frontend typically runs at http://localhost:3000
-- Backend API typically runs at http://localhost:4000
+JWT based authentication
 
-Environment & configuration
----------------------------
-Create a .env file in backend and frontend (if needed). Example backend .env:
-```
-PORT=4000
-DATABASE_URL=postgres://user:pass@localhost:5432/interviewx
-JWT_SECRET=replace_with_a_strong_secret
-S3_ENDPOINT=https://s3.example.com
-S3_BUCKET=interviewx-audio
-S3_ACCESS_KEY=yourkey
-S3_SECRET_KEY=yoursecret
-```
-5. Live Test
+Protected routes
 
-Live test - https://www.interviewx.xyz/
+Secure API calls
 
-Accessibility & Performance tips
---------------------------------
-- Use compressed audio formats (OPUS/MP3 with appropriate bitrates) and stream rather than inline base64.
-- Provide transcripts and captions where applicable.
-- Lazy-load images and audio thumbnails.
-- Ensure color contrast meets WCAG AA for text over gradients.
+Environment-based config
 
-Contributing
-------------
-We love contributions! If you'd like to help:
-1. Fork the repo
-2. Create a feature branch: git checkout -b feature/my-awesome-feature
-3. Commit your changes: git commit -m "feat: add ..."
-4. Push to your branch and open a Pull Request
+📌 Future Enhancements
 
-Please follow the repo's code style and include tests for new functionality. Add descriptive commit messages and PR descriptions.
+🎥 Video-based AI Interview
 
-Suggested labels
-- enhancement
-- bug
-- docs
-- help wanted
-- good first issue
+🗣 Speech-to-text analysis
 
-Roadmap (suggested)
--------------------
-- [ ] Improve audition workflow (batch invites, bulk actions)
-- [ ] Implement payments & booking flow
-- [ ] Add advanced filtering and AI-match suggestions
-- [ ] Mobile app or PWA support
-- [ ] Analytics & usage dashboards for talent
+📊 Advanced analytics dashboard
 
-License
--------
-This repository is released under the MIT License. See LICENSE.md for details.
+🏆 Leaderboard system
 
-Contact
--------
-Created by syedmohammadaquib — say hi at: https://github.com/syedmohammadaquib
-If you'd like, I can:
-- tailor this README to match the exact directory layout / tech choices in your repo,
-- generate hero images / GIFs given screenshots,
-- or create CONTRIBUTING.md, ISSUE_TEMPLATE.md and PR templates.
+📱 Mobile App
 
-Thank you — ship beautiful audio experiences! 🎧✨
+🧪 Sample Use Case
+
+User logs in
+
+Selects role (e.g., Frontend Developer)
+
+AI starts mock interview
+
+User answers questions
+
+AI evaluates responses
+
+Dashboard shows score & improvement tips
+
+👨‍💻 Developed By
+
+Advay Anand
+B.Tech | Full Stack Developer
+Passionate about AI & Product Building
+
+⭐ Why InterviewX?
+
+✔ Real Interview Simulation
+✔ AI-Powered Feedback
+✔ Personalized Learning
+✔ Data-Driven Improvement
+✔ Placement Ready
