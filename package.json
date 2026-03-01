@@ -59,6 +59,9 @@
     "uuid": "^11.1.0",
     "zod": "^4.0.5"
   },
+  "overrides": {
+    "zod": "^4.0.5"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
