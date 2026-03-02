@@ -1,174 +1,72 @@
-🚀 InterviewX – AI Powered Mock Interview Platform
+# 🚀 InterviewX – The Intelligent AI Interview Platform
 
-Crack Interviews with AI. Practice Smart. Improve Faster.
+**Crack Interviews with AI. Experience the Future of Technical Hiring.**
 
-InterviewX is an AI-powered mock interview platform designed to help students and professionals prepare for technical and HR interviews through real-time AI-generated questions, intelligent evaluation, and detailed performance feedback.
+InterviewX is a state-of-the-art AI-powered platform designed to simulate real-world technical and behavioral interviews. Combining **Real-time Voice AI**, **Secure Coding Environments**, and **Deep HR Analytics**, InterviewX provides a comprehensive ecosystem for both candidates and recruiters.
 
-🌟 Vision
+---
 
-To make interview preparation accessible, personalized, and data-driven using AI.
+## � The Experience
 
-🎯 Problem Statement
+![AI Voice Interview UI](file:///C:/Users/Advay%20Anand/.gemini/antigravity/brain/4e1abc66-10e6-4995-9a13-dafd9f0075d1/interview_voice_ui_1772429480050.png)
+*Human-like AI interaction during oral and introductory phases.*
 
-Students don’t get real interview experience before placements
+---
 
-No personalized feedback after practice
+## 🛠️ Key Features
 
-Lack of structured preparation
+### 🎤 1. Real-time Voice AI Interviewer
+*   **Adaptive Conversations**: Powered by **Vapi** and **GPT-4o-mini**, the AI conducts natural, two-way technical discussions.
+*   **Transcript Sync**: Live transcription of the entire interview for both candidate and reviewer.
+*   **Phase-Based Flow**: Seamless transitions from Oral Introduction (Resume-based) to Practical Coding Assessment.
 
-Fear & low confidence during real interviews
+### � 2. Secure Coding IDE (Integrity Mode)
+![Advanced Coding IDE](file:///C:/Users/Advay%20Anand/.gemini/antigravity/brain/4e1abc66-10e6-4995-9a13-dafd9f0075d1/code_editor_ide_1772429504309.png)
+*   **Anti-Cheat Protection**: Disables copy-paste, context menus, and right-clicks to ensure code authenticity.
+*   **Live Compiler**: Supports multiple languages (C++, Java, Python, JavaScript) with real-time output.
+*   **Problem Sidebar**: Dynamic problem statements and test cases delivered directly by the AI into the UI.
 
-InterviewX solves this by simulating real interview environments using AI.
+### 📊 3. HR Analytics & Keystroke Replay
+![HR Analytics Dashboard](file:///C:/Users/Advay%20Anand/.gemini/antigravity/brain/4e1abc66-10e6-4995-9a13-dafd9f0075d1/hr_analytics_dashboard_1772429532736.png)
+*   **Keystroke Replay**: Recruiters can watch the candidate's coding process shot-by-shot to understand their logic.
+*   **Success Distribution**: Visual charts (Donut/Line) showing candidate strength and performance trends.
+*   **Normalized Filters**: Unified role-based analysis (e.g., merging "web dev" and "Web Developer").
 
-🧠 Key Features
-🎤 1. AI Mock Interviews
+---
 
-Role-based question generation
+## 🏗️ Technical Architecture
 
-Domain-specific interviews (Frontend, Backend, DSA, HR, etc.)
+| Component | Technology |
+| :--- | :--- |
+| **Frontend** | Next.js 15 (App Router), Tailwind CSS, Framer Motion |
+| **Real-time Voice** | Vapi SDK (Voice AI), Deepgram (STT) |
+| **Logic/Brain** | OpenAI GPT-4o-mini |
+| **Database/Auth** | Supabase (PostgreSQL), NextAuth / Supabase Auth |
+| **IDE Engine** | Monaco Editor, Custom Integrity Layer |
+| **Reporting** | jsPDF (Automated Feedback Reports) |
 
-Dynamic difficulty adjustment
+---
 
-📊 2. Smart Evaluation
+## � Project Roadmap
+- [x] **Phase 1**: Voice Interaction & Basic Interview Flow.
+- [x] **Phase 2**: Coding IDE Integration with AI Problem Delivery.
+- [x] **Phase 3**: Anti-Cheat (Integrity Mode) & Security Blocks.
+- [x] **Phase 4**: HR Analytics Dashboard with Keystroke Replay.
+- [ ] **Phase 5**: Multi-candidate Comparative AI Ranking.
 
-AI-based answer analysis
+---
 
-Technical accuracy scoring
+## 👨‍💻 Developed By
 
-Communication & clarity rating
+**Advay Anand**
+*Full Stack Developer | AI Enthusiast*
 
-Strength & weakness breakdown
+---
 
-📝 3. Resume-Based Questioning
+## 🔐 Security & Privacy
+*   **Integrity Mode Active**: All coding sessions are restricted from external tools to maintain interview quality.
+*   **Secure Data Layer**: High-security Supabase Row Level Security (RLS) ensures only authorized recruiters can see results.
 
-Upload resume
+---
 
-AI generates personalized questions
-
-Project-specific cross questioning
-
-📈 4. Performance Analytics
-
-Track improvement over time
-
-Score history
-
-Skill-wise insights
-
-🤖 5. Real-time Feedback
-
-Instant improvement suggestions
-
-Better answer examples
-
-Confidence boosting tips
-
-🏗️ Tech Stack
-Frontend
-
-React.js
-
-Tailwind CSS
-
-Axios
-
-Backend
-
-Node.js
-
-Express.js
-
-Database
-
-MongoDB
-
-AI Integration
-
-OpenAI API / LLM Integration
-
-Authentication
-
-JWT Authentication
-
-📂 Project Structure
-InterviewX/
-│
-├── client/          # Frontend (React)
-├── server/          # Backend (Node + Express)
-├── models/          # MongoDB Schemas
-├── routes/          # API Routes
-├── controllers/     # Business Logic
-└── README.md
-⚙️ Installation & Setup
-1️⃣ Clone the Repository
-git clone https://github.com/yourusername/InterviewX.git
-cd InterviewX
-2️⃣ Install Dependencies
-Backend
-cd server
-npm install
-Frontend
-cd client
-npm install
-3️⃣ Setup Environment Variables
-
-Create .env file inside server/:
-
-PORT=5000
-MONGO_URI=your_mongodb_connection
-JWT_SECRET=your_secret_key
-OPENAI_API_KEY=your_openai_key
-4️⃣ Run the Project
-Backend
-npm start
-Frontend
-npm start
-🔐 Security Features
-
-JWT based authentication
-
-Protected routes
-
-Secure API calls
-
-Environment-based config
-
-📌 Future Enhancements
-
-🎥 Video-based AI Interview
-
-🗣 Speech-to-text analysis
-
-📊 Advanced analytics dashboard
-
-🏆 Leaderboard system
-
-📱 Mobile App
-
-🧪 Sample Use Case
-
-User logs in
-
-Selects role (e.g., Frontend Developer)
-
-AI starts mock interview
-
-User answers questions
-
-AI evaluates responses
-
-Dashboard shows score & improvement tips
-
-👨‍💻 Developed By
-
-Advay Anand
-B.Tech | Full Stack Developer
-Passionate about AI & Product Building
-
-⭐ Why InterviewX?
-
-✔ Real Interview Simulation
-✔ AI-Powered Feedback
-✔ Personalized Learning
-✔ Data-Driven Improvement
-✔ Placement Ready
+*Built with ❤️ to redefine the hiring experience.*
