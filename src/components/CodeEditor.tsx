@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import {
     LuCode,
@@ -47,6 +47,13 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     const [isCopying, setIsCopying] = useState(false);
     const [showOutput, setShowOutput] = useState(false);
     const [isProblemVisible, setIsProblemVisible] = useState(true);
+
+    // Auto-open problem sidebar when a problem is received
+    useEffect(() => {
+        if (problem) {
+            setIsProblemVisible(true);
+        }
+    }, [problem]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(code);
