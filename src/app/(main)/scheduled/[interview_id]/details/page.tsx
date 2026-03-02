@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -19,15 +19,17 @@ import {
   LuActivity,
   LuDatabase,
   LuDock,
+  LuHistory,
   LuSend,
   LuSquareSquare,
   LuWorkflow,
 } from "react-icons/lu";
 import Image from "next/image";
-import axios from "axios";
-import AILoadingState from "@/components/kokonutui/ai-loading";
 import SendMailForm from "@/components/SendMailForm";
 import { generatePDFReport } from "@/utils/pdfGenerator";
+import CodeHistoryViewer from "@/components/CodeHistoryViewer";
+import axios from "axios"; // Added axios import as it's used later
+import AILoadingState from "@/components/kokonutui/ai-loading";
 
 // ---------- Interfaces ----------
 interface Question {
@@ -58,7 +60,7 @@ interface Feedback {
 interface InterviewDetails {
   userEmail?: string;
   userName?: string;
-  feedback?: Feedback | null;
+  feedback?: (Feedback & { metadata?: { code_history?: any[], final_code?: string } }) | null;
   resumeURL?: string | null;
   created_at?: string;
 }
@@ -168,7 +170,31 @@ export default function InterviewDetailsPage() {
         .eq("interview_id", interview_id);
 
       console.log("detailed candidate and interview data", result.data);
-      setInterviewList(result.data as Interview[]);
+
+      let itData = result.data as Interview[] | null;
+
+      // FALLBACK: If nested join failed or returned empty candidates (common hyphen-naming/FK issue in Supabase)
+      if (itData && itData.length > 0) {
+        const interview = itData[0];
+        const nestedDetails = (interview as any)["interview-details"];
+
+        if (!nestedDetails || nestedDetails.length === 0) {
+          console.log("Nested details empty, attempting manual fetch for interview_id:", interview_id);
+          const { data: manualDetails, error: manualErr } = await supabase
+            .from("interview-details")
+            .select("userEmail,userName,feedback,resumeURL,created_at")
+            .eq("interview_id", interview_id);
+
+          if (!manualErr && manualDetails) {
+            console.log("Manual fetch fetched", manualDetails.length, "candidates");
+            (itData[0] as any)["interview-details"] = manualDetails;
+          } else if (manualErr) {
+            console.error("Manual details fetch failed:", manualErr.message);
+          }
+        }
+      }
+
+      setInterviewList(itData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -189,7 +215,7 @@ export default function InterviewDetailsPage() {
 
       if (!resumeUrl) {
         throw new Error("Resume URL is not available");
-      }  
+      }
 
       const { data } = await axios.post("/api/resume-score", {
         resumeURL: resumeUrl,
@@ -469,8 +495,8 @@ export default function InterviewDetailsPage() {
 
           <div
             className={`relative w-full max-w-6xl h-full max-h-[850px] flex flex-col overflow-hidden rounded-none shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-700 border animate-in zoom-in-95 slide-in-from-bottom-10 ${darkTheme
-                ? `bg-slate-900/90 border-slate-800/50 text-slate-100 shadow-${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes" ? 'blue' : 'rose'}-500/10`
-                : `bg-white/90 border-slate-200 text-slate-900 shadow-slate-200`
+              ? `bg-slate-900/90 border-slate-800/50 text-slate-100 shadow-${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes" ? 'blue' : 'rose'}-500/10`
+              : `bg-white/90 border-slate-200 text-slate-900 shadow-slate-200`
               }`}
           >
             <div className={`flex items-center justify-between px-10 py-8 border-b shrink-0 ${darkTheme ? "border-slate-800/50 bg-slate-900/40" : "border-slate-100 bg-slate-50/50"
@@ -498,8 +524,8 @@ export default function InterviewDetailsPage() {
                       {selectedCandidate.userName}
                     </h1>
                     <div className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border backdrop-blur-md ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes"
-                        ? (darkTheme ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-emerald-50 text-emerald-700 border-emerald-100")
-                        : (darkTheme ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-rose-50 text-rose-700 border-rose-100")
+                      ? (darkTheme ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-emerald-50 text-emerald-700 border-emerald-100")
+                      : (darkTheme ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-rose-50 text-rose-700 border-rose-100")
                       }`}>
                       {selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes" ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
                       {selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes" ? "Vetted Talent" : "Rejected"}
@@ -567,13 +593,13 @@ export default function InterviewDetailsPage() {
 
                 <div className="lg:col-span-8 space-y-8">
                   <section className={`p-10 rounded-[3rem] border transition-all duration-500 relative group ${darkTheme
-                      ? `bg-slate-800/20 border-slate-800 hover:border-slate-700`
-                      : `bg-white border-slate-100 shadow-sm hover:border-slate-300`
+                    ? `bg-slate-800/20 border-slate-800 hover:border-slate-700`
+                    : `bg-white border-slate-100 shadow-sm hover:border-slate-300`
                     }`}>
                     <div className="flex items-center gap-4 mb-8">
                       <div className={`p-3 rounded-2xl shadow-xl ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes"
-                          ? "bg-blue-600 text-white shadow-blue-900/20"
-                          : "bg-rose-600 text-white shadow-rose-900/20"
+                        ? "bg-blue-600 text-white shadow-blue-900/20"
+                        : "bg-rose-600 text-white shadow-rose-900/20"
                         }`}>
                         <FileText className="w-6 h-6" />
                       </div>
@@ -588,13 +614,13 @@ export default function InterviewDetailsPage() {
                   </section>
 
                   <section className={`p-10 rounded-[3rem] border transition-all duration-500 ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes"
-                      ? (darkTheme ? "bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30" : "bg-emerald-50/30 border-emerald-100 hover:border-emerald-200")
-                      : (darkTheme ? "bg-rose-500/5 border-rose-500/10 hover:border-rose-500/30" : "bg-rose-50/30 border-rose-100 hover:border-rose-200")
+                    ? (darkTheme ? "bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30" : "bg-emerald-50/30 border-emerald-100 hover:border-emerald-200")
+                    : (darkTheme ? "bg-rose-500/5 border-rose-500/10 hover:border-rose-500/30" : "bg-rose-50/30 border-rose-100 hover:border-rose-200")
                     }`}>
                     <div className="flex items-center gap-4 mb-8">
                       <div className={`p-3 rounded-2xl shadow-xl ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes"
-                          ? "bg-emerald-600 text-white shadow-emerald-900/20"
-                          : "bg-rose-600 text-white shadow-rose-900/20"
+                        ? "bg-emerald-600 text-white shadow-emerald-900/20"
+                        : "bg-rose-600 text-white shadow-rose-900/20"
                         }`}>
                         <MessageSquare className="w-6 h-6" />
                       </div>
@@ -610,6 +636,24 @@ export default function InterviewDetailsPage() {
                       </p>
                     </div>
                   </section>
+
+                  {/* CODELOG / KEYSTROKE REPLAY */}
+                  <section className={`p-10 rounded-[3rem] border transition-all duration-500 ${darkTheme ? "bg-slate-800/20 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className={`p-3 rounded-2xl shadow-xl bg-blue-600 text-white shadow-blue-900/20`}>
+                        <LuHistory className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-black tracking-tight tracking-tight">Coding Journey</h2>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-slate-500">Live Keystroke Replay</p>
+                      </div>
+                    </div>
+
+                    <CodeHistoryViewer
+                      history={(selectedCandidate.feedback as any)?.metadata?.code_history || []}
+                      darkTheme={darkTheme}
+                    />
+                  </section>
                 </div>
               </div>
             </div>
@@ -617,13 +661,13 @@ export default function InterviewDetailsPage() {
             <div className={`px-10 py-8 border-t shrink-0 backdrop-blur-xl ${darkTheme ? "bg-slate-900/80 border-slate-800/50" : "bg-white/80 border-slate-100"
               }`}>
               <div className={`flex flex-col md:flex-row items-center justify-between gap-8 p-6 rounded-[2rem] border transition-all shadow-2xl ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes"
-                  ? (darkTheme ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100")
-                  : (darkTheme ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")
+                ? (darkTheme ? "bg-emerald-500/5 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100")
+                : (darkTheme ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")
                 }`}>
                 <div className="flex items-center gap-6">
                   <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes"
-                      ? (darkTheme ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-100 text-emerald-600")
-                      : (darkTheme ? "bg-rose-500/20 text-rose-400" : "bg-rose-100 text-rose-600")
+                    ? (darkTheme ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-100 text-emerald-600")
+                    : (darkTheme ? "bg-rose-500/20 text-rose-400" : "bg-rose-100 text-rose-600")
                     }`}>
                     {selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes" ? <CheckCircle2 className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
                   </div>
@@ -650,8 +694,8 @@ export default function InterviewDetailsPage() {
                   </button>
                   <button
                     className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-white shadow-2xl transition-all hover:scale-[1.05] active:scale-95 group ${selectedCandidate?.feedback?.data?.feedback?.recommendation === "Yes"
-                        ? "bg-gradient-to-r from-emerald-600 to-blue-600 shadow-emerald-500/30"
-                        : "bg-gradient-to-r from-rose-600 to-red-600 shadow-rose-500/30"
+                      ? "bg-gradient-to-r from-emerald-600 to-blue-600 shadow-emerald-500/30"
+                      : "bg-gradient-to-r from-rose-600 to-red-600 shadow-rose-500/30"
                       }`}
                     onClick={() => {
                       setMailCandidate(selectedCandidate);

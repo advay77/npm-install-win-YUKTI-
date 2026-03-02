@@ -3,31 +3,14 @@ import { useInterview } from "@/context/interviewContext";
 import { useParams, useRouter } from "next/navigation";
 import {
   InfoIcon,
-  Loader2,
-  LucideCheckCircle,
-  Mic,
-  PhoneMissed,
   SearchCheck,
   Timer,
-  X,
 } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { generatePDFReport } from "@/utils/pdfGenerator";
 import Vapi from "@vapi-ai/web";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  LuChevronLeft,
   LuDownload,
   LuGhost,
   LuMessagesSquare,
@@ -36,26 +19,22 @@ import {
   LuVideo,
   LuVideoOff,
   LuX,
+  LuTerminal,
 } from "react-icons/lu";
 import { toast } from "sonner";
-import { json, set } from "zod";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
-import jsPDF from 'jspdf';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
 import { supabase } from "@/services/supabaseClient";
-import { fi } from "zod/v4/locales";
-import { SidebarTrigger } from "@/components/ui/SideBar";
 import { Separator } from "@/components/ui/separator";
 import AI_Voice from "@/components/kokonutui/AiVoice";
+import CodeEditor from "@/components/CodeEditor";
 
 const VAPI_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
 
@@ -71,12 +50,10 @@ interface Message {
 }
 
 const StartInterview = () => {
-  const { interviewInfo, setInterviewInfo } = useInterview();
+  const { interviewInfo } = useInterview();
   const router = useRouter();
   const params = useParams<{ interviewID: string }>();
-  const [vapiError, setVapiError] = useState<unknown>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [caption, setCaption] = useState<string>("");
   const [activeUser, setActiveUser] = useState<boolean>(false);
   const [callFinished, setCallFinished] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -84,13 +61,38 @@ const StartInterview = () => {
   const [isCallActive, setIsCallActive] = useState(false);
   const [hasCallStartToast, setHasCallStartToast] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversation, setConversation] = useState<string>("");
   const [generateLoading, setGenerateLoading] = useState<boolean>(false);
   const [hasAcknowledgedInstructions, setHasAcknowledgedInstructions] = useState(false);
   const [showPreInterviewModal, setShowPreInterviewModal] = useState(false);
   const [hasAttempted, setHasAttempted] = useState<boolean>(false);
   const [seconds, setSeconds] = useState<number>(0);
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Coding Mode States
+  const [isCodingMode, setIsCodingMode] = useState(false);
+  const [code, setCode] = useState<string>("// JavaScript Solution\nconsole.log(\"InterviewX IDE Initialized.\");\n\nfunction main() {\n    const message = \"The code is running successfully!\";\n    console.log(message);\n}\n\nmain();");
+  const [codeLanguage, setCodeLanguage] = useState("javascript");
+  const [codeOutput, setCodeOutput] = useState("");
+  const [codeHistory, setCodeHistory] = useState<{ timestamp: number, code: string }[]>([]);
+  const [activeProblem, setActiveProblem] = useState<any>(null);
+
+  // Update default code when language changes
+  useEffect(() => {
+    // Only set default if user hasn't edited anything or the code is the default of a language
+    const defaults = [
+      "// JavaScript Solution\nconsole.log(\"InterviewX IDE Initialized.\");\n\nfunction main() {\n    const message = \"The code is running successfully!\";\n    console.log(message);\n}\n\nmain();",
+      "# Python Solution\nprint(\"Python Environment Ready.\")\n\ndef greet(name):\n    print(f\"Hello, {name}!\")\n\ngreet(\"Candidate\")",
+      "// C++ Solution\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"C++ Output System Ready!\" << endl;\n    cout << \"Status Code: 200\" << endl;\n    return 0;\n}",
+      "// Java Solution\npublic class Solution {\n    public static void main(String[] args) {\n        System.out.println(\"Hello from Java!\");\n    }\n}"
+    ];
+
+    if (code === "" || defaults.includes(code)) {
+      if (codeLanguage === "python") setCode("# Python Solution\nprint(\"Python Environment Ready.\")\n\ndef greet(name):\n    print(f\"Hello, {name}!\")\n\ngreet(\"Candidate\")");
+      else if (codeLanguage === "cpp") setCode("// C++ Solution\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"C++ Output System Ready!\" << endl;\n    cout << \"Status Code: 200\" << endl;\n    return 0;\n}");
+      else if (codeLanguage === "java") setCode("// Java Solution\npublic class Solution {\n    public static void main(String[] args) {\n        System.out.println(\"Hello from Java!\");\n    }\n}");
+      else if (codeLanguage === "javascript") setCode("// JavaScript Solution\nconsole.log(\"InterviewX IDE Initialized.\");\n\nfunction main() {\n    const message = \"The code is running successfully!\";\n    console.log(message);\n}\n\nmain();");
+    }
+  }, [codeLanguage]);
 
   const [vapi] = useState(() => new Vapi(VAPI_PUBLIC_KEY));
 
@@ -107,24 +109,18 @@ const StartInterview = () => {
   const [suspiciousActivities, setSuspiciousActivities] = useState<string[]>([]);
   const [warningCount, setWarningCount] = useState<number>(0);
   const [warnedCategories, setWarnedCategories] = useState<Set<string>>(new Set());
-  const cheatingDetectionRef = useRef<NodeJS.Timeout | null>(null);
+  const cheatingDetectionRef = useRef<any>(null);
   const previousImageDataRef = useRef<ImageData | null>(null);
 
-  // Clean up cheating detection on unmount
-  useEffect(() => {
-    return () => {
-      stopCheatingDetection();
-    };
-  }, []);
-
   const transcriptRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const missingRequired = !interviewInfo?.userName || !interviewInfo?.userEmail;
     if (missingRequired) {
       const id = (interviewInfo?.interviewID || (params?.interviewID as string)) || "";
       if (id) router.replace(`/interview/${id}`);
     }
-  }, [interviewInfo?.userName, interviewInfo?.userEmail, interviewInfo?.interviewID, router, params]);
+  }, [interviewInfo, router, params]);
 
   useEffect(() => {
     if (!hasAcknowledgedInstructions) {
@@ -132,46 +128,6 @@ const StartInterview = () => {
     }
   }, [hasAcknowledgedInstructions]);
 
-  // Start the interview only after explicit user interaction
-  // to satisfy browser audio/mic permission requirements.
-  const handleStart = async () => {
-    if (!hasAcknowledgedInstructions) {
-      toast.error("Please acknowledge the pre-interview instructions first.");
-      setShowPreInterviewModal(true);
-      return;
-    }
-    if (hasStarted) return;
-    try {
-      // Prevent multiple attempts from the same email for this interview
-      const already = await checkAlreadyAttempted();
-      if (already) {
-        setHasAttempted(true);
-        toast.error("You have already completed this interview", {
-          description: (
-            <span className="text-sm text-gray-500 font-medium">
-              Each email can submit once for this interview.
-            </span>
-          ),
-        });
-        return;
-      }
-
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      await startCall();
-      setHasStarted(true);
-    } catch (err) {
-      console.error("Mic permission error:", err);
-      toast.error("Microphone permission required", {
-        description: (
-          <span className="text-sm text-gray-500 font-medium">
-            Please allow microphone access to start the interview.
-          </span>
-        ),
-      });
-    }
-  };
-
-  // Check in DB whether this email already attempted this interview
   const checkAlreadyAttempted = async (): Promise<boolean> => {
     try {
       if (!interviewInfo?.userEmail || !interviewInfo?.interviewID) return false;
@@ -181,18 +137,13 @@ const StartInterview = () => {
         .eq("interview_id", interviewInfo.interviewID)
         .eq("userEmail", interviewInfo.userEmail)
         .limit(1);
-      if (error) {
-        console.error("Attempt check error:", error);
-        return false;
-      }
+      if (error) return false;
       return Array.isArray(data) && data.length > 0;
     } catch (e) {
-      console.error("Attempt check unexpected error:", e);
       return false;
     }
   };
 
-  // Preload attempt status when user info becomes available
   useEffect(() => {
     (async () => {
       const attempted = await checkAlreadyAttempted();
@@ -200,7 +151,7 @@ const StartInterview = () => {
         setHasAttempted(true);
       }
     })();
-  }, [interviewInfo?.userEmail, interviewInfo?.interviewID]);
+  }, [interviewInfo]);
 
   const startCamera = async () => {
     try {
@@ -214,8 +165,6 @@ const StartInterview = () => {
       toast.success("Camera turned on");
       setStream(mediaStream);
       setIsCameraOn(true);
-      
-      // Start cheating detection when camera is on
       startCheatingDetection();
     } catch (err) {
       console.error("Camera access error:", err);
@@ -232,65 +181,63 @@ const StartInterview = () => {
     }
     toast.success("Camera turned off");
     setIsCameraOn(false);
-    
-    // Stop cheating detection when camera is off
     stopCheatingDetection();
   };
 
   const toggleCamera = () => {
-    if (isCameraOn) stopCamera();
-    else startCamera();
+    if (isCameraOn) {
+      stopCamera(); // Already sets isCameraOn to false
+    } else {
+      startCamera(); // Already sets isCameraOn to true
+    }
   };
 
-  // Auto-enable camera on load (single prompt)
   useEffect(() => {
     if (cameraInitRef.current) return;
     cameraInitRef.current = true;
-    (async () => {
-      try {
-        await startCamera();
-      } catch (err) {
-        console.error("Camera auto-enable error:", err);
-      }
-    })();
+    startCamera();
   }, []);
 
   const toggleMic = async () => {
     try {
       if (isMicOn) {
-        // Mute Vapi if supported
-        try {
-          (vapi as { setMuted?: (muted: boolean) => void })?.setMuted?.(true);
-        } catch { }
+        // Turning OFF
+        if (isCallActive) {
+          try {
+            (vapi as any)?.setMuted?.(true);
+          } catch (e) {
+            console.warn("Vapi Mute Error (ignore if call ended):", e);
+          }
+        }
         setIsMicOn(false);
-        toast.success("Mic turned off");
+        toast.info("Mic Muted", { icon: "🔇" });
       } else {
-        // Ensure permission at least once
+        // Turning ON
         await navigator.mediaDevices.getUserMedia({ audio: true });
-        try {
-          (vapi as { setMuted?: (muted: boolean) => void })?.setMuted?.(false);
-        } catch { }
+        if (isCallActive) {
+          try {
+            (vapi as any)?.setMuted?.(false);
+          } catch (e) {
+            console.warn("Vapi Unmute Error (ignore if call ended):", e);
+          }
+        }
         setIsMicOn(true);
-        toast.success("Mic turned on");
+        toast.success("Mic Unmuted", { icon: "🎤" });
       }
     } catch (err) {
       console.error("Mic access error:", err);
+      toast.error("Could not access microphone");
     }
   };
 
-  // Auto-enable mic on load (single prompt)
   useEffect(() => {
     if (micInitRef.current) return;
     micInitRef.current = true;
     (async () => {
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
-        try {
-          (vapi as { setMuted?: (muted: boolean) => void })?.setMuted?.(false);
-        } catch { }
         setIsMicOn(true);
       } catch (err) {
-        console.error("Mic auto-enable error:", err);
         setIsMicOn(false);
       }
     })();
@@ -299,221 +246,234 @@ const StartInterview = () => {
   const startCall = async () => {
     let questionList = "";
     interviewInfo?.interviewData?.forEach((item: { question: string }, index: number) => {
-      questionList +=
-        item.question +
-        (index < interviewInfo.interviewData.length - 1 ? "," : "");
+      questionList += item.question + (index < interviewInfo.interviewData.length - 1 ? "," : "");
     });
     try {
       await vapi.start({
         model: {
           provider: "openai",
-          model: "gpt-4.1-mini",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "system",
-              content:
-                `You are a professional AI interviewer conducting a technical and behavioral assessment for the position of ${interviewInfo?.jobPosition || 'this role'}.
+              content: `You are a professional AI interviewer for ${interviewInfo?.jobPosition || 'this role'}. 
+FOLLOW THIS STRUCTURED INTERVIEW FLOW:
 
-INTERVIEW GUIDELINES:
-1. Begin with a warm, professional introduction and explain the interview process
-2. Ask questions one at a time from the provided list
-3. Listen carefully to complete answers before proceeding
-4. Ask relevant follow-up questions to probe deeper into candidate responses
-5. Maintain a conversational yet professional tone throughout
-6. Provide encouraging but realistic feedback after each major answer
-7. Manage time effectively to ensure all questions are covered
+Phase 1: Oral Introduction (2 Questions)
+1. Start with a brief, friendly introduction.
+2. Ask exactly TWO technical oral questions from this list: ${questionList}.
+3. Listen and provide brief feedback or small follow-ups.
 
-INTERVIEW QUESTIONS (ask in order):
-${questionList}
+Phase 2: Coding Assessment
+1. After the 2 oral questions, explicitly say: "Great! Now let's move on to a practical coding challenge. Please switch to the Coding View if you haven't already."
+2. Give them ONE specific coding problem and IMMEDIATELY follow your verbal explanation with a hidden JSON structure.
+3. FORMAT REQUIREMENT: Your output must contain the string "PROBLEM_JSON:" followed by a valid JSON object. IMPORTANT: Do NOT speak the JSON part aloud; it is for the UI only.
+   PROBLEM_JSON: {
+     "title": "Problem Title",
+     "description": "Full description of the logic required.",
+     "examples": [
+       {"input": "example input", "output": "expected output", "explanation": "optional"}
+     ]
+   }
+4. INSTRUCTIONS FOR CANDIDATE: "Write your solution in the editor. You can click 'Run' to test it locally. Once you're ready for me to review it, click 'Discuss with AI'."
+5. BEHAVIOR: You CANNOT see the code in real-time. You only see it when the candidate clicks 'Discuss with AI'. 
+6. When they share the code: 
+   - Analyze the logic, time/space complexity.
+   - Point out bugs or suggest optimizations.
+   - Ask them why they chose this specific approach.
 
-ASSESSMENT CRITERIA:
-- Technical knowledge and practical application
-- Problem-solving approach and logical thinking
-- Communication clarity and articulation
-- Professional experience and achievements
-- Cultural fit and enthusiasm
-
-SAMPLE INTRODUCTION:
-"Good morning/afternoon! Welcome to your ${interviewInfo?.jobPosition || 'interview'}. I'm your AI interviewer, and today we'll discuss your experience and skills through a series of questions. This typically takes about ${interviewInfo?.interviewDuration || '30'} minutes. Please feel free to take your time with your answers. Shall we begin?"
-
-FOLLOW-UP STRATEGIES:
-- "Could you elaborate on that specific example?"
-- "What challenges did you face in that situation?"
-- "How did you measure the success of your approach?"
-- "What would you do differently in hindsight?"
-
-FEEDBACK EXAMPLES:
-- "That's a comprehensive answer. Your experience with [specific technology] seems solid."
-- "Interesting approach! Can you walk me through your decision-making process?"
-- "I appreciate your honesty. Let's explore this from another angle."
-
-Remember: You are assessing both technical competence and communication skills. Maintain engagement and show genuine interest in their responses.`
+Keep your tone professional, encouraging, and highly technical during the coding phase.`
             },
           ],
         },
-
-        voice: {
-          provider: "vapi",
-          voiceId: "Hana",
-        },
-
-        transcriber: {
-          provider: "deepgram",
-          model: "nova-2",
-          language: "en-US",
-        },
-        firstMessage:
-          "Hi " +
-          interviewInfo?.userName +
-          ", how are you? Ready for your interview on " +
-          interviewInfo?.jobPosition +
-          "?",
-        endCallMessage:
-          "Thanks for chatting! Hope to see you crushing projects soon!",
-        endCallPhrases: ["goodbye", "bye", "end call", "hang up"],
+        voice: { provider: "vapi", voiceId: "Hana" },
+        transcriber: { provider: "deepgram", model: "nova-2", language: "en-US" },
+        firstMessage: "Hi " + interviewInfo?.userName + ", how are you? Ready for your interview today?",
       });
     } catch (error) {
-      console.error("Error starting call:", error);
-      setVapiError(error);
       setLoading(false);
     }
   };
 
+  const handleStart = async () => {
+    if (!hasAcknowledgedInstructions) {
+      toast.error("Please acknowledge instructions first.");
+      setShowPreInterviewModal(true);
+      return;
+    }
+    if (hasStarted) return;
+    try {
+      if (await checkAlreadyAttempted()) {
+        setHasAttempted(true);
+        toast.error("Already attempted.");
+        return;
+      }
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      await startCall();
+      setHasStarted(true);
+    } catch (err) { }
+  };
+
   useEffect(() => {
-    const handleSpeechStart = () => {
-      setActiveUser(true);
-    };
-
-    const handleSpeechEnd = () => {
-      setActiveUser(false);
-    };
-
+    const handleSpeechStart = () => setActiveUser(true);
+    const handleSpeechEnd = () => setActiveUser(false);
     const handleCallStart = () => {
-      console.log("Call has started");
       setIsCallActive(true);
       setLoading(false);
+      // Sync mute state on start
+      (vapi as any)?.setMuted?.(!isMicOn);
       if (!hasCallStartToast) {
         setHasCallStartToast(true);
-        toast.info("Interview started", {
-          description: (
-            <span className="text-sm text-gray-600 font-medium">
-              Your interview has started. <span className="text-blue-600">All the best!</span>
-            </span>
-          ),
-        });
+        toast.info("Interview started");
       }
     };
-
     const handleCallEnd = () => {
-      console.log("Call has stopped");
       setIsCallActive(false);
       setCallFinished(true);
-      setHasCallStartToast(false);
     };
 
-    const handleError = (e: unknown) => {
-      console.error(e);
-      setVapiError(e);
+    const handleVapiError = (error: any) => {
+      console.error("Vapi Global Error:", error);
+      // Suppress technical meeting ejection messages as they are often redundant
+      const errorMsg = typeof error === 'string' ? error : JSON.stringify(error);
+      if (errorMsg.includes("Meeting has ended") || errorMsg.includes("ejection")) {
+        return;
+      }
+      toast.error("Connection issue detected.");
     };
 
     vapi.on("speech-start", handleSpeechStart);
     vapi.on("speech-end", handleSpeechEnd);
     vapi.on("call-start", handleCallStart);
     vapi.on("call-end", handleCallEnd);
-    vapi.on("error", handleError);
+    vapi.on("error", handleVapiError);
 
     return () => {
       vapi.off("speech-start", handleSpeechStart);
       vapi.off("speech-end", handleSpeechEnd);
       vapi.off("call-start", handleCallStart);
       vapi.off("call-end", handleCallEnd);
-      vapi.off("error", handleError);
+      vapi.off("error", handleVapiError);
     };
-  }, [vapi]);
+  }, [vapi, hasCallStartToast]);
 
   useEffect(() => {
     if (callFinished) {
       GenerateFeedback();
       setIsDialogOpen(true);
-      toast.success("Interview Has been Ended", {
-        description: (
-          <span className="text-sm text-gray-500 font-medium">
-            Your Interview Has Been Ended!{" "}
-          </span>
-        ),
-      });
     }
   }, [callFinished]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
+    let interval: any = null;
     if (isCallActive) {
-      interval = setInterval(() => {
-        setSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (interval) clearInterval(interval);
+      interval = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => { if (interval) clearInterval(interval); };
   }, [isCallActive]);
 
+  // Scan existing messages for a problem if not already active
+  useEffect(() => {
+    if (activeProblem) return;
+    const lastProblemMessage = [...messages].reverse().find(m => m.type === "assistant" && m.content.includes("PROBLEM_JSON:"));
+    if (lastProblemMessage) {
+      try {
+        const content = lastProblemMessage.content;
+        const markerIndex = content.indexOf("PROBLEM_JSON:");
+        const jsonSubstring = content.substring(markerIndex + "PROBLEM_JSON:".length);
+        const firstBrace = jsonSubstring.indexOf("{");
+        const lastBrace = jsonSubstring.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          const jsonPart = jsonSubstring.substring(firstBrace, lastBrace + 1);
+          setActiveProblem(JSON.parse(jsonPart));
+        }
+      } catch (e) {
+        console.error("Failed to parse historical problem JSON", e);
+      }
+    }
+  }, [messages, activeProblem]);
+
   const formatTime = (totalSeconds: number) => {
-    const hrs = Math.floor(totalSeconds / 3600)
-      .toString()
-      .padStart(2, "0");
-    const mins = Math.floor((totalSeconds % 3600) / 60)
-      .toString()
-      .padStart(2, "0");
+    const mins = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
     const secs = (totalSeconds % 60).toString().padStart(2, "0");
-    return `${hrs}:${mins}:${secs}`;
+    return `${mins}:${secs}`;
   };
 
   useEffect(() => {
-    const handleMessage = (message: { type: string; transcriptType?: string; role?: string; transcript?: string }) => {
+    const handleMessage = (message: any) => {
       if (message.type === "transcript" && message.transcriptType === "final") {
         const role = message.role === "user" ? "user" : "assistant";
         const content = message.transcript || "";
+        setMessages((prev) => [...prev, { type: role as "user" | "assistant", content }]);
 
-        setMessages((prev) => {
-          if (prev.length > 0) {
-            const lastMsg = prev[prev.length - 1];
-            if (lastMsg.type === role && lastMsg.content === content) {
-              return prev;
+        // Logic to detect Problem JSON from AI
+        if (role === "assistant" && content.includes("PROBLEM_JSON:")) {
+          try {
+            // Find the first '{' after PROBLEM_JSON: and the last '}'
+            const markerIndex = content.indexOf("PROBLEM_JSON:");
+            const jsonSubstring = content.substring(markerIndex + "PROBLEM_JSON:".length);
+            const firstBrace = jsonSubstring.indexOf("{");
+            const lastBrace = jsonSubstring.lastIndexOf("}");
+
+            if (firstBrace !== -1 && lastBrace !== -1) {
+              const jsonPart = jsonSubstring.substring(firstBrace, lastBrace + 1);
+              const problemData = JSON.parse(jsonPart);
+              setActiveProblem(problemData);
+              toast.success("New coding challenge received!");
             }
+          } catch (err) {
+            console.error("Failed to parse problem JSON", err);
           }
-          return [...prev, { type: role, content }];
-        });
+        }
       }
     };
-
-    vapi.on("message", handleMessage);
-
+    (vapi as any)?.on("message", handleMessage);
     return () => {
-      vapi.off("message", handleMessage);
+      (vapi as any)?.off("message", handleMessage);
     };
   }, [vapi]);
 
+  // Periodic Code Snapshotting for Keystroke Replay
+  useEffect(() => {
+    if (!isCallActive || !isCodingMode) return;
+
+    // Capture initial state immediately
+    if (codeHistory.length === 0) {
+      setCodeHistory([{ timestamp: Date.now(), code: code }]);
+    }
+
+    const interval = setInterval(() => {
+      setCodeHistory(prev => {
+        // Only add if code has changed since last snapshot
+        if (prev.length > 0 && prev[prev.length - 1].code === code) return prev;
+        return [...prev, { timestamp: Date.now(), code: code }];
+      });
+    }, 15000); // Every 15 seconds
+
+    return () => clearInterval(interval);
+  }, [isCallActive, isCodingMode, code]);
+
   const stopCall = () => {
+    toast.info("Wrapping up your interview...");
     stopCamera();
-    vapi.stop();
+    try {
+      vapi.stop();
+    } catch (e) {
+      console.warn("Vapi Stop Error:", e);
+    }
     setIsMicOn(false);
-    toast.success("Call ended");
-    
-    // Stop cheating detection when call ends
+    setIsCallActive(false);
     stopCheatingDetection();
+
+    // Manually trigger finishing state if not already done
+    if (!callFinished) {
+      setCallFinished(true);
+    }
   };
 
-  // Cheating detection functions
   const startCheatingDetection = () => {
     if (cheatingDetectionRef.current) return;
-    
-    cheatingDetectionRef.current = setInterval(() => {
-      detectSuspiciousActivity();
-    }, 5000); // Check every 5 seconds
+    cheatingDetectionRef.current = setInterval(() => detectSuspiciousActivity(), 5000);
   };
 
   const stopCheatingDetection = () => {
@@ -525,693 +485,443 @@ Remember: You are assessing both technical competence and communication skills. 
 
   const detectSuspiciousActivity = () => {
     if (!videoRef.current || !isCallActive) return;
-    
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
     if (!ctx) return;
-    
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
-    
     try {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      
-      // Basic motion detection and object analysis
-      const suspiciousActivity = analyzeFrameForCheating(imageData);
-      if (suspiciousActivity) {
-        handleSuspiciousActivity(suspiciousActivity);
-      }
-      
-      // Check for movement
+      const activity = analyzeFrameForCheating(imageData);
+      if (activity) handleSuspiciousActivity(activity);
       if (previousImageDataRef.current) {
-        const motionRatio = detectMotion(previousImageDataRef.current, imageData);
-        if (motionRatio > 0.05) { // threshold for 5% pixels changed significantly
-          handleSuspiciousActivity("movement");
-        }
+        const motion = detectMotion(previousImageDataRef.current, imageData);
+        if (motion > 0.05) handleSuspiciousActivity("movement");
       }
       previousImageDataRef.current = imageData;
-    } catch (error) {
-      console.error('Error in cheating detection:', error);
-    }
-  };
-
-  const getCenterRegionBrightness = (data: Uint8ClampedArray, width: number, height: number): number => {
-    let centerBrightness = 0;
-    const centerX = Math.floor(width / 2);
-    const centerY = Math.floor(height / 2);
-    const regionSize = 100;
-    
-    for (let y = centerY - regionSize; y < centerY + regionSize; y++) {
-      for (let x = centerX - regionSize; x < centerX + regionSize; x++) {
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-          const i = (y * width + x) * 4;
-          centerBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
-        }
-      }
-    }
-    
-    return centerBrightness / (regionSize * regionSize * 4);
+    } catch (e) { }
   };
 
   const analyzeFrameForCheating = (imageData: ImageData): string | null => {
     const data = imageData.data;
     let brightness = 0;
-    let motionPixels = 0;
-    let faceDetected = false;
-
-    // Simple brightness analysis (for phone screens, papers, etc.)
+    let brightPixels = 0;
     for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      brightness += (r + g + b) / 3;
-
-      // Detect bright spots (potential phone screens)
-      if (r > 200 && g > 200 && b > 200) {
-        motionPixels++;
-      }
+      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      brightness += avg;
+      if (avg > 200) brightPixels++;
     }
-
     const avgBrightness = brightness / (data.length / 4);
-    const brightPixelRatio = motionPixels / (data.length / 4);
-
-    // Check for suspicious conditions
-    if (brightPixelRatio > 0.1) {
-      return "bright_screen";
-    }
-
-    if (avgBrightness < 30) {
-      return "low_light";
-    }
-
-    // Check if face is visible (basic detection)
-    // In a real implementation, you'd use face detection API
-    const centerRegion = getCenterRegionBrightness(data, imageData.width, imageData.height);
-    if (centerRegion < 20) {
-      return "no_face";
-    }
-
+    if (avgBrightness < 30) return "low_light";
+    if (brightPixels / (data.length / 4) > 0.1) return "bright_screen";
     return null;
   };
 
   const detectMotion = (prev: ImageData, curr: ImageData): number => {
-    let changedPixels = 0;
-    const threshold = 30; // difference threshold for color change
+    let changed = 0;
     for (let i = 0; i < prev.data.length; i += 4) {
-      const rDiff = Math.abs(prev.data[i] - curr.data[i]);
-      const gDiff = Math.abs(prev.data[i + 1] - curr.data[i + 1]);
-      const bDiff = Math.abs(prev.data[i + 2] - curr.data[i + 2]);
-      if (rDiff > threshold || gDiff > threshold || bDiff > threshold) {
-        changedPixels++;
-      }
+      const diff = Math.abs(prev.data[i] - curr.data[i]);
+      if (diff > 30) changed++;
     }
-    return changedPixels / (prev.data.length / 4);
+    return changed / (prev.data.length / 4);
   };
 
   const handleSuspiciousActivity = (category: string) => {
-    if (!warnedCategories.has(category)) {
-      setWarnedCategories(prev => new Set(prev).add(category));
+    if (warnedCategories.has(category)) return;
+    setWarnedCategories(prev => new Set(prev).add(category));
+    const timestamp = new Date().toLocaleTimeString();
+    setSuspiciousActivities(prev => [...prev.slice(-4), `${timestamp}: ${category}`]);
+    setWarningCount(prev => prev + 1);
 
-      const timestamp = new Date().toLocaleTimeString();
-      const logEntry = `${timestamp}: ${category}`;
-      setSuspiciousActivities(prev => [...prev.slice(-4), logEntry]);
+    let msg = "⚠️ Warning: Suspicious activity.";
+    if (category === "low_light") msg = "⚠️ Warning: Low lighting.";
+    if (category === "bright_screen") msg = "⚠️ Warning: Device screen detected.";
+    if (category === "movement") msg = "⚠️ Warning: Movement detected.";
 
-      setWarningCount(prev => prev + 1);
-
-      // Show warning to candidate with specific message
-      showWarningToCandidate(category);
-
-      // Log for review
-      console.warn('Suspicious activity detected:', logEntry);
-
-      // End interview after 3 warnings
-      if (warningCount + 1 >= 3) {
-        endInterviewDueToCheating();
-      }
-    } else {
-      // Already warned for this category, log but no new warning
-      console.log('Suspicious activity detected again:', category);
-    }
-  };
-
-  const showWarningToCandidate = (category: string) => {
-    let message = "⚠️ Warning: Suspicious activity detected. Please ensure you are visible and no unauthorized materials are present.";
-    switch (category) {
-      case "bright_screen":
-        message = "⚠️ Warning: Bright screen detected - possible phone or device usage. Please remove any unauthorized devices.";
-        break;
-      case "low_light":
-        message = "⚠️ Warning: Low lighting detected - ensure proper lighting for visibility.";
-        break;
-      case "no_face":
-        message = "⚠️ Warning: No face detected in camera view. Please position yourself properly.";
-        break;
-      case "movement":
-        message = "⚠️ Warning: Movement detected - ensure you remain still during the interview.";
-        break;
-    }
-    setWarningMessage(message);
+    setWarningMessage(msg);
     setShowWarning(true);
-    
-    // Auto-hide warning after 5 seconds
-    setTimeout(() => {
-      setShowWarning(false);
-    }, 5000);
+    setTimeout(() => setShowWarning(false), 5000);
+
+    if (warningCount + 1 >= 3) {
+      toast.error("Terminated due to multiple warnings.");
+      stopCall();
+      router.push("/");
+    }
   };
 
-  const endInterviewDueToCheating = () => {
-    toast.error("Interview terminated due to suspicious activity", {
-      description: "Multiple warnings were issued. The interview has been ended.",
-      duration: 10000,
+  const toggleCodingMode = () => {
+    const next = !isCodingMode;
+    setIsCodingMode(next);
+    if (isCallActive) {
+      try {
+        vapi.send({
+          type: "add-message",
+          message: {
+            role: "system",
+            content: `The candidate has switched to ${next ? 'CODING VIEW' : 'VIDEO VIEW'}.`,
+          },
+        });
+      } catch (e) {
+        console.warn("Vapi Send Mode Sync Error:", e);
+      }
+    }
+    toast.info(`Switched to ${next ? 'Coding' : 'Video'} Mode`);
+  };
+
+  const runCode = () => {
+    setCodeOutput("Running...\n");
+    setTimeout(() => {
+      if (codeLanguage === "javascript") {
+        try {
+          const consoleLog: string[] = [];
+          const logHandler = (...args: any[]) => {
+            const output = args.map(a =>
+              typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+            ).join(" ");
+            consoleLog.push(output);
+          };
+
+          const customConsole = {
+            log: logHandler,
+            info: logHandler,
+            warn: logHandler,
+            debug: logHandler,
+            error: (...args: any[]) => logHandler("ERROR:", ...args),
+          };
+
+          const run = new Function("console", `try { ${code} } catch(e) { console.error(e.message); }`);
+          run(customConsole);
+
+          const finalOutput = consoleLog.join("\n") || "(Code executed, but produced no output. Did you call your function?)";
+          setCodeOutput(finalOutput);
+        } catch (err: any) {
+          setCodeOutput("Runtime Error: " + err.message);
+        }
+      } else if (codeLanguage === "python") {
+        // Advanced Simulation for Interview Use-cases
+        const outputs: string[] = [];
+
+        // Match string literals
+        const stringPrints = code.match(/print\s*\(\s*f?['"](.*?)['"]\s*\)/g);
+        if (stringPrints) {
+          stringPrints.forEach(p => {
+            const m = p.match(/['"](.*?)['"]/);
+            if (m) outputs.push(m[1]);
+          });
+        }
+
+        // Match variable assignments and prints
+        const variableMatch = code.match(/(\w+)\s*=\s*['"]?(.*?)['"]?\s*\n/g);
+        if (variableMatch) {
+          variableMatch.forEach(v => {
+            const parts = v.split("=");
+            const varName = parts[0].trim();
+            const varVal = parts[1].trim().replace(/['"]/g, "");
+
+            const varPrint = new RegExp(`print\\s*\\(\\s*${varName}\\s*\\)`, 'g');
+            if (varPrint.test(code)) {
+              outputs.push(varVal);
+            }
+          });
+        }
+
+        if (outputs.length > 0) {
+          setCodeOutput(outputs.join("\n") + "\n\n(Simulated Python Response)");
+        } else {
+          setCodeOutput("Code executed successfully.\n(For dynamic logic, click 'Discuss with AI' to have the AI review your solution)");
+        }
+      } else if (codeLanguage === "cpp") {
+        const outputs: string[] = [];
+        const couts = code.match(/cout\s*<<\s*['"](.*?)['"]\s*/g);
+        if (couts) {
+          couts.forEach(c => {
+            const m = c.match(/['"](.*?)['"]/);
+            if (m) outputs.push(m[1]);
+          });
+          setCodeOutput(outputs.join("") + "\n\n(Simulated C++ Output)");
+        } else {
+          setCodeOutput("Build successful.\nProcess exited with status 0.");
+        }
+      } else {
+        setCodeOutput(`Run functionality for ${codeLanguage} is simulated.\nPlease click 'Discuss with AI' to get technical feedback on your logic.`);
+      }
+    }, 600);
+  };
+
+  const askAIToDiscussCode = () => {
+    if (!isCallActive) {
+      toast.error("Please start the interview first.");
+      return;
+    }
+    toast.info("Sharing code with AI...");
+    vapi.send({
+      type: "add-message",
+      message: {
+        role: "system",
+        content: `CANDIDATE SHARED CODE UPDATE:
+Language: ${codeLanguage}
+Code Content:
+${code}
+
+Code Execution Output (if any):
+${codeOutput || 'Not executed yet.'}
+
+Please review this solution for correctness and optimization. Discuss it with the candidate immediately.`,
+      },
     });
-    
-    // Log the termination
-    const terminationLog = `${new Date().toLocaleTimeString()}: Interview terminated due to multiple cheating warnings`;
-    setSuspiciousActivities(prev => [...prev, terminationLog]);
-    
-    // Stop the call
-    stopCall();
-    
-    // Redirect after a delay
-    setTimeout(() => {
-      router.push('/');
-    }, 3000);
   };
 
-  
   const GenerateFeedback = async () => {
     setGenerateLoading(true);
+    let aiFeedback = null;
+
+    // 1. Try to get AI Feedback
     try {
-      // Validate required info
-      if (!interviewInfo?.userName || !interviewInfo?.userEmail || !interviewInfo?.interviewID) {
-        console.error("❌ Missing interview info:", interviewInfo);
-        toast.error("Missing candidate information. Cannot save feedback.");
-        return;
+      if (messages.length > 0) {
+        const res = await axios.post("/api/ai-feedback", { conversation: messages });
+        aiFeedback = res.data;
+      } else {
+        console.warn("No conversation messages found to analyze.");
       }
+    } catch (err: any) {
+      console.error("AI Feedback Generation Failed:", err);
+      toast.error("AI analysis encountered an issue, but your completion is being saved.");
+    }
 
-      console.log("📝 Generating feedback with info:", interviewInfo);
-      const res = await axios.post("/api/ai-feedback", {
-        conversation: messages,
-      });
-      console.log("✅ Feedback Result From GROQ LLM:", res.data);
-      
-      // Store feedback data for PDF generation
-      setFeedback(res.data);
+    // 2. Prepare Fallback if AI fails or no messages
+    if (!aiFeedback) {
+      aiFeedback = {
+        data: {
+          feedback: {
+            rating: { relevance: 0, technicalDepth: 0, clarity: 0, communicationQuality: 0 },
+            summary: "The interview was completed, but automated analysis could not be generated due to insufficient conversation data or service interruption.",
+            recommendation: "Maybe",
+            recommendationMessage: "Further manual review required.",
+            strengths: [],
+            improvements: [],
+            technicalAssessment: "Manual review pending.",
+            communicationAssessment: "Manual review pending.",
+            overallConfidence: 0
+          }
+        }
+      };
+    }
 
+    setFeedback(aiFeedback);
+
+    // 3. ALWAYS Save to Supabase
+    try {
+      // Nesting code data inside feedback since columns might not exist in target table
       const insertData = {
         userName: interviewInfo.userName,
         userEmail: interviewInfo.userEmail,
         interview_id: interviewInfo.interviewID,
-        feedback: res.data,
-        recommended: "No",
-        acceptResume: interviewInfo.acceptResume || false,
-        organization: interviewInfo.organization || "",
         resumeURL: interviewInfo.resumeURL || null,
+        feedback: {
+          ...aiFeedback,
+          metadata: {
+            code_history: codeHistory,
+            final_code: code
+          }
+        },
+        recomended: aiFeedback?.data?.feedback?.recommendation || "Maybe",
       };
 
-      console.log("Inserting data into database:", insertData);
+      const { error: insertError } = await supabase.from("interview-details").insert([insertData]);
 
-      const { data, error } = await supabase
-        .from("interview-details")
-        .insert([insertData])
-        .select();
-
-      if (error) {
-        console.error("❌ Database Insert Error:", error);
-        console.error("Error details:", error.details);
-        console.error("Error hint:", error.hint);
-        console.error("Error message:", error.message);
-        console.error("Data attempted to insert:", insertData);
-        toast.error("Failed to save interview feedback", {
-          description: error.message || "Unknown database error",
-        });
-        return;
+      if (insertError) {
+        console.error("Detailed Supabase Insert Error:", JSON.stringify(insertError, null, 2));
+        throw new Error(insertError.message || "Database insert failed");
       }
 
-      console.log("✅ Interview Details Saved:", data);
-      
-      // Generate PDF report
-      await generatePDFReport(feedback, interviewInfo);
-      
-      toast.success("Interview feedback saved successfully!", {
-        description: (
-          <span className="text-sm text-gray-500 font-medium">
-            Your interview has been completed and feedback has been generated.
-          </span>
-        ),
-      });
-    } catch (err: unknown) {
-      console.error("❌ GenerateFeedback Error:", err);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast.error("Error saving feedback", {
-        description: errorMessage,
-      });
+      await generatePDFReport(aiFeedback, interviewInfo);
+      toast.success("Interview report saved successfully!");
+    } catch (err: any) {
+      console.error("Supabase Save Failed:", err);
+      toast.error("Failed to save report to dashboard: " + (err.message || "Unknown error"));
     } finally {
       setGenerateLoading(false);
     }
   };
 
-  const addMessage = (type: "user" | "assistant", content: string) => {
-    const newMessage: Message = {
-      type,
-      content,
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    setConversation(
-      (prev) => `${prev}\n${type === "user" ? "User" : "Assistant"}: ${content}`
-    );
-  };
-
   const downloadTranscription = () => {
-    if (messages.length === 0) {
-      toast.error("No transcription to download", {
-        description: (
-          <span className="text-sm text-gray-500 font-medium">
-            Start the interview first to generate transcription.
-          </span>
-        ),
-      });
-      return;
-    }
-
-    const transcript = messages
-      .map((msg) => `${msg.type === "user" ? "You" : "AI"}: ${msg.content}`)
-      .join("\n\n");
-
+    const transcript = messages.map((msg) => `${msg.type}: ${msg.content}`).join("\n\n");
     const blob = new Blob([transcript], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `interview-transcript-${interviewInfo?.interviewID || "unknown"}-${new Date().toISOString().split("T")[0]}.txt`;
-    document.body.appendChild(a);
+    a.download = "transcript.txt";
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    toast.success("Transcription downloaded", {
-      description: (
-        <span className="text-sm text-gray-500 font-medium">
-          Your interview transcript has been saved.
-        </span>
-      ),
-    });
   };
 
-  const demoConversation = [
-    { type: "assistant", content: "Hi, Renit. How are you?" },
-    {
-      type: "assistant",
-      content: "Ready for your interview on React and Next.js vs Vue?",
-    },
-    { type: "assistant", content: "Able to work with MongoDB, PostgreSQL..." },
-    {
-      type: "user",
-      content: "Uh, yes. I'm ready for that. I'm pretty excited.",
-    },
-    {
-      type: "assistant",
-      content:
-        "Awesome. Let's kick things off, tell me among React, Next.js, Vue.js",
-    },
-    { type: "assistant", content: "Which one will you use and why?" },
-    {
-      type: "user",
-      content: "Well, I will use Next.js for sure, because of its SSR and SSG",
-    },
-    { type: "assistant", content: "Thats great renit" },
-    {
-      type: "assistant",
-      content: "Now tell me about your experience with react",
-    },
-    {
-      type: "user",
-      content:
-        "I have worked with React for 2 years, where i learned lazy loading, hooks, context api",
-    },
-    {
-      type: "assistant",
-      content: "okay so tell me with your backend experience",
-    },
-    {
-      type: "user",
-      content: "Yes i worked with node , express , flask and even supabase.",
-    },
-    {
-      type: "assistant",
-      content: "Great, tell me something bout your projects?",
-    },
-    {
-      type: "assistant",
-      content:
-        "Tell me any third party packages you have worked with in your project",
-    },
-    {
-      type: "user",
-      content:
-        "yes, i created a neuratwin web app,  that uses openai api to generate text, langchain , mongodb , vapi ai for voice assistants, and sync with googpe calenders.",
-    },
-  ];
-
-
-  //   -----------------------------
   return (
     <>
-      {showPreInterviewModal && (
-        <Dialog open={showPreInterviewModal} onOpenChange={(open) => {
-          if (!open && !hasAcknowledgedInstructions) return; // Prevent closing without acknowledgment
-          setShowPreInterviewModal(open);
-        }}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Pre-Interview Instructions</DialogTitle>
-              <div className="text-left text-muted-foreground text-sm">
-                Before starting your interview, please ensure:
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Share your screen for monitoring purposes.</li>
-                  <li>Sit in a proper environment with good lighting and no distractions.</li>
-                  <li>Remove any unauthorized materials or foreign objects.</li>
-                  <li>Ensure your camera and microphone are enabled and working.</li>
-                </ul>
-              </div>
-            </DialogHeader>
-            <div className="flex justify-end">
-              <Button onClick={() => {
-                setHasAcknowledgedInstructions(true);
-                setShowPreInterviewModal(false);
-              }}>
-                I Acknowledge and Continue
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={showPreInterviewModal} onOpenChange={setShowPreInterviewModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Instructions</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => { setHasAcknowledgedInstructions(true); setShowPreInterviewModal(false); }}>
+              I Acknowledge
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-3 py-3 text-slate-50 overflow-hidden flex flex-col">
-      {/* Warning Banner */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg transition-opacity duration-300 ${showWarning ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="h-screen bg-slate-950 text-slate-50 overflow-hidden flex flex-col p-3">
+        {/* Warning Banner */}
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-2 rounded-full shadow-2xl transition-all duration-300 ${showWarning ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <span className="font-bold">{warningMessage}</span>
+        </div>
+
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 flex-1 w-full min-h-0">
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-3 shrink-0">
+            <h1 className="text-xl font-bold font-sora tracking-tight">INTERVIEWX AI</h1>
             <div className="flex items-center gap-3">
-              <div className="h-3 w-3 bg-white rounded-full" />
-              <p className="font-semibold text-sm">{warningMessage}</p>
-            </div>
-            <div className="text-xs font-medium">
-              Warning {warningCount}/3
+              <div className="flex items-center gap-2 text-sm font-bold"><Timer className="h-4 w-4" /> {formatTime(seconds)}</div>
+              <Image src="/profile.png" alt="Profile" width={40} height={40} className="rounded-full border-2 border-white/20" />
             </div>
           </div>
-        </div>
-      
-      <div className="mx-auto flex max-w-7xl flex-col gap-2 flex-1 w-full min-h-0">
-        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur shrink-0">
-          <div className="flex flex-col gap-1.5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-slate-400">
-              Live interview
-            </p>
-            <h1 className="flex items-center gap-2.5 text-xl font-bold font-sora tracking-tight">
-              <span className="font-extrabold">INTERVIEWX</span> AI Interview
-              <LuVideo className="h-5 w-5 text-sky-300" />
-            </h1>
-            <p className="text-xs font-medium text-slate-400">
-              Stay relaxed - we will guide you through every question.
-            </p>
-          </div>
 
-          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 shadow-inner shadow-sky-900/40">
-            {(() => {
-              const dotClass = callFinished
-                ? "bg-rose-400"
-                : isCallActive
-                  ? "bg-emerald-400"
-                  : loading
-                    ? "bg-amber-400 animate-pulse"
-                    : "bg-slate-400";
-              const label = callFinished
-                ? "Ended"
-                : isCallActive
-                  ? "Connected"
-                  : loading
-                    ? "Connecting"
-                    : "Ready";
-              return (
-                <>
-                  <div className={`h-3 w-3 rounded-full ${dotClass}`} />
-                  <span className="text-sm font-semibold">{label}</span>
-                </>
-              );
-            })()}
-            <Separator orientation="vertical" className="h-5 bg-white/10" />
-            <div className="flex items-center gap-2 text-sm font-bold tabular-nums">
-              <Timer className="h-4 w-4 text-slate-300" /> {formatTime(seconds)}
-            </div>
-            <Separator orientation="vertical" className="h-5 bg-white/10" />
-            <Image
-              src={"/profile.png"}
-              alt="User Avatar"
-              width={48}
-              height={48}
-              className="h-11 w-11 rounded-full border-2 border-white/20 object-cover shadow-sm"
-              priority
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-[1.4fr_0.8fr] gap-3 max-lg:grid-cols-1 flex-1 min-h-0 overflow-hidden">
-          {/* LEFT */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/50 to-slate-800/80 p-3 shadow-[0_25px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl flex flex-col min-h-0">
-            <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-sky-400 animate-pulse" />
-                <span className="font-semibold text-xs">Voice interview in progress</span>
-              </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-300">
-                {interviewInfo?.jobPosition || "Interview"}
-              </span>
-            </div>
-
-            <div className="relative isolate mt-2 flex flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-slate-950/60">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.18),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.15),transparent_30%)]" />
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="absolute inset-0 h-full w-full rounded-xl object-cover"
-              />
-              {!isCameraOn && (
-                <div className="absolute inset-0 z-[1] flex flex-col items-center justify-center gap-2 text-center">
-                  <Image
-                    src="/profile.png"
-                    alt="User Avatar"
-                    width={100}
-                    height={100}
-                    className="h-[100px] w-[100px] rounded-full border-3 border-white/20 object-cover shadow-2xl"
-                    priority
-                  />
-                  <p className="text-sm font-bold capitalize text-slate-100">
-                    {interviewInfo?.userName}
-                  </p>
+          <div className={`grid ${isCodingMode ? 'grid-cols-[1.8fr_1fr]' : 'grid-cols-[1.4fr_0.8fr]'} gap-3 flex-1 min-h-0 overflow-hidden`}>
+            {/* LEFT AREA: Video or Editor */}
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 p-3 flex flex-col min-h-0">
+              {isCodingMode ? (
+                <CodeEditor
+                  code={code}
+                  onChange={(val) => setCode(val || "")}
+                  language={codeLanguage}
+                  onLanguageChange={(lang) => setCodeLanguage(lang)}
+                  onAskAI={askAIToDiscussCode}
+                  onRun={runCode}
+                  output={codeOutput}
+                  problem={activeProblem}
+                />
+              ) : (
+                <div className="relative flex-1 rounded-xl overflow-hidden bg-black">
+                  <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />
                 </div>
               )}
 
-              <div className="absolute right-3 top-3 z-[2] flex h-[95px] w-[95px] flex-col items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm p-2 text-center shadow-xl shadow-sky-900/50">
-                <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/30 bg-white/15 shadow-inner">
-                  <h1 className="text-base font-extrabold text-white tracking-tight">AI</h1>
-                </div>
-                {!loading && (
-                  <div className="flex flex-col items-center gap-0.5 text-[9px] font-semibold text-slate-100">
-                    <AI_Voice />
-                    <p className="text-[8px] font-semibold">{activeUser ? "Speaking" : "Listening"}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-              <Button
-                onClick={handleStart}
-                disabled={hasAttempted}
-                className={`h-9 px-4 font-inter text-xs font-bold shadow-lg ${hasAttempted ? "opacity-60 cursor-not-allowed bg-white/10 text-slate-300" : "bg-gradient-to-r from-sky-500 to-emerald-500 text-white hover:from-sky-400 hover:to-emerald-400"}`}
-              >
-                Start <SearchCheck className="ml-1.5 h-3.5 w-3.5" />
-              </Button>
-              <Button
-                onClick={toggleCamera}
-                className={`h-9 px-4 font-inter text-xs font-bold shadow-lg transition-all duration-150 ${isCameraOn
-                  ? "bg-gradient-to-r from-sky-500 to-indigo-500 text-white hover:from-sky-400 hover:to-indigo-400"
-                  : "border border-white/20 bg-white/5 text-slate-100 hover:bg-white/10"
-                  }`}
-              >
-                {isCameraOn ? (
-                  <LuVideo className="mr-1.5 h-3.5 w-3.5" />
-                ) : (
-                  <LuVideoOff className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                Video
-              </Button>
-
-              <Button
-                onClick={toggleMic}
-                className={`h-9 px-4 font-inter text-xs font-bold shadow-lg transition-all duration-150 ${isMicOn
-                  ? "bg-gradient-to-r from-emerald-500 to-sky-500 text-white hover:from-emerald-400 hover:to-sky-400"
-                  : "border border-white/20 bg-white/5 text-slate-100 hover:bg-white/10"
-                  }`}
-              >
-                {isMicOn ? (
-                  <LuMic className="mr-1.5 h-3.5 w-3.5" />
-                ) : (
-                  <LuMicOff className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                Mic
-              </Button>
-
-              <Button
-                variant="destructive"
-                onClick={stopCall}
-                className="h-9 px-4 font-inter text-xs font-bold shadow-lg bg-gradient-to-r from-rose-600 to-orange-500 text-white hover:from-rose-500 hover:to-orange-400"
-              >
-                <X className="mr-1.5 h-3.5 w-3.5" />
-                End
-              </Button>
-            </div>
-          </div>
-
-          {/* RIGHT */}
-          <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)] backdrop-blur-xl min-h-0 overflow-hidden">
-            <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-sky-600/30 via-indigo-500/30 to-fuchsia-500/30 px-3 py-2 text-xs font-bold text-white shadow-inner shrink-0">
-              <div className="flex items-center gap-2">
-                <LuMessagesSquare className="h-4 w-4" />
-                <span className="font-bold text-xs">Live Transcription</span>
-              </div>
-              <span className="rounded-full border border-white/25 bg-white/10 px-2.5 py-0.5 text-[9px] uppercase tracking-[0.15em] font-bold text-slate-50">
-                Clarity matters
-              </span>
-            </div>
-
-            <div className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-[11px] leading-relaxed font-medium text-slate-200 shrink-0">
-              All transcriptions appear here. Keep answers concise and relevant.
-            </div>
-
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 text-center text-slate-400 flex-1 min-h-0 overflow-hidden">
-                <LuGhost className="h-8 w-8 opacity-50" />
-                <p className="text-xs font-semibold text-slate-300">No transcriptions yet</p>
-                <p className="text-[10px] font-medium text-slate-500 leading-relaxed max-w-[200px]">Your conversation will appear here once the call begins.</p>
-                
-                {/* Suspicious Activities Log */}
-                {suspiciousActivities.length > 0 && (
-                  <div className="mt-4 w-full max-w-sm">
-                    <h4 className="text-xs font-semibold text-red-400 mb-2">⚠️ Activity Log</h4>
-                    <div className="space-y-1">
-                      {suspiciousActivities.map((activity, index) => (
-                        <div key={index} className="text-[10px] text-red-300 bg-red-900/20 px-2 py-1 rounded">
-                          {activity}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div ref={transcriptRef} className="mt-2 space-y-2 overflow-y-auto overflow-x-hidden pr-1.5 flex-1 min-h-0">
-                {messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.type === "assistant" ? "justify-start" : "justify-end"}`}
-                  >
-                    <div
-                      className={`max-w-[85%] rounded-lg px-3 py-1.5 text-xs leading-relaxed font-inter shadow-sm shadow-black/20 break-words ${msg.type === "assistant"
-                        ? "rounded-bl-none border border-white/10 bg-white/10 text-slate-50"
-                        : "rounded-br-none bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-medium"
-                        }`}
-                    >
-                      {msg.content}
-                    </div>
-
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="pt-2 w-full shrink-0">
-              <Separator className="mb-2 bg-white/10" />
-              <div className="grid grid-cols-1 gap-2">
-                <Button onClick={downloadTranscription} className="flex w-full items-center justify-center gap-1.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 text-xs font-bold text-white shadow-lg hover:from-sky-400 hover:via-indigo-400 hover:to-fuchsia-400 h-9">
-                  Download Transcription <LuDownload className="h-3.5 w-3.5" />
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <Button
+                  onClick={handleStart}
+                  disabled={hasAttempted || hasStarted}
+                  className={hasStarted ? "bg-slate-800" : "bg-blue-600 hover:bg-blue-500"}
+                >
+                  {hasStarted ? "Interview in Progress" : "Start Interview"}
                 </Button>
-                {feedback && (
-                  <Button 
-                    onClick={() => generatePDFReport(feedback, interviewInfo)}
-                    className="flex w-full items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-xs font-bold text-white shadow-lg hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 h-9"
-                  >
-                    Download PDF Report <LuDownload className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+
+                <Button
+                  onClick={toggleCamera}
+                  variant="outline"
+                  className={`gap-2 border-white/10 ${isCameraOn ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
+                >
+                  {isCameraOn ? <LuVideo className="w-4 h-4" /> : <LuVideoOff className="w-4 h-4" />}
+                  {isCameraOn ? "Camera: ON" : "Camera: OFF"}
+                </Button>
+
+                <Button
+                  onClick={toggleMic}
+                  variant="outline"
+                  className={`gap-2 border-white/10 ${isMicOn ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
+                >
+                  {isMicOn ? <LuMic className="w-4 h-4" /> : <LuMicOff className="w-4 h-4" />}
+                  {isMicOn ? "Mic: ON" : "Mic: OFF"}
+                </Button>
+
+                <Button variant="destructive" onClick={stopCall} className="gap-2">
+                  <LuX className="w-4 h-4" /> Finish
+                </Button>
+
+                <Separator orientation="vertical" className="h-6 bg-white/10 mx-2" />
+
+                <Button
+                  onClick={toggleCodingMode}
+                  className={`gap-2 ${isCodingMode ? "bg-indigo-600 hover:bg-indigo-500" : "bg-slate-800 hover:bg-slate-700"}`}
+                >
+                  {isCodingMode ? <LuVideo className="w-4 h-4" /> : <LuTerminal className="w-4 h-4" />}
+                  {isCodingMode ? "Switch to Video View" : "Go to Coding View"}
+                </Button>
+              </div>
+            </div>
+
+            {/* RIGHT AREA: Transcription + PIP Video */}
+            <div className="flex flex-col gap-3 min-h-0">
+              {isCodingMode && (
+                <div className="h-48 rounded-2xl border border-white/10 overflow-hidden relative bg-black shrink-0">
+                  <video
+                    ref={(el) => { if (el && stream) el.srcObject = stream; }}
+                    autoPlay playsInline muted
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 scale-75 origin-bottom-right">
+                    <AI_Voice />
+                    <span className="text-[10px] uppercase">{activeUser ? "Speaking" : "AI"}</span>
+                  </div>
+                </div>
+              )}
+              <div className="flex-1 rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col min-h-0">
+                <div className="flex items-center gap-2 mb-4"><LuMessagesSquare className="w-4 h-4" /> <span className="text-xs font-bold uppercase tracking-widest">Transcription</span></div>
+                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                  {messages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-2 opacity-50">
+                      <LuGhost className="w-8 h-8" />
+                      <span className="text-xs">Waiting for conversation...</span>
+                    </div>
+                  ) : (
+                    messages.map((m, i) => (
+                      <div key={i} className={`flex ${m.type === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+                        <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs ${m.type === 'assistant' ? 'bg-white/10 text-slate-100' : 'bg-blue-600 text-white'}`}>
+                          {m.content}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <Button onClick={downloadTranscription} className="mt-4 w-full text-xs font-bold gap-2"><LuDownload className="w-3.5 h-3.5" /> Download</Button>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent showCloseButton={false} className="max-w-md overflow-hidden rounded-none border border-white/10 bg-slate-900 text-white shadow-[0_25px_80px_rgba(0,0,0,0.55)]">
-            <DialogHeader className="relative bg-gradient-to-br from-sky-600 via-indigo-500 to-fuchsia-400 p-6 pr-12 text-white">
-              <DialogTitle className="flex items-center justify-center gap-3 text-center text-2xl font-bold font-sora">
-                Congratulations! <LucideCheckCircle className="h-7 w-7 text-white" />
-              </DialogTitle>
-              <div className="text-center text-base font-medium text-slate-100">
-                {(interviewInfo?.userName ?? "Candidate")}, your interview has ended successfully
-              </div>
-              <DialogClose className="absolute right-4 top-4 rounded-md text-[#005eff] transition-colors duration-150 hover:text-[#0047cc]">
-                <LuX className="h-5 w-5" />
-              </DialogClose>
-            </DialogHeader>
-
-            <div className="flex flex-col gap-5 p-6 text-center">
-              <p className="text-base font-medium text-slate-200">
-                You have just completed your interview for <br />
-                <span className="font-bold text-white">{interviewInfo?.jobPosition ?? interviewInfo?.jobTitle ?? "your selected role"}</span>.
-              </p>
-
-              <p className="text-sm font-medium text-slate-400">You can now safely leave this meeting.</p>
-
-              <div className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-left text-sm font-medium text-slate-200">
-                <InfoIcon className="h-6 w-6 text-sky-300" />
-                <p className="leading-relaxed">
-                  You can close this tab or explore other interviews. Your feedback will be ready shortly.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <Button
-                  onClick={() => setIsDialogOpen(false)}
-                  className="h-11 w-full font-semibold bg-white/10 text-white hover:bg-white/20"
-                >
-                  Close
-                </Button>
-                {feedback && (
-                  <Button
-                    onClick={() => generatePDFReport(feedback, interviewInfo)}
-                    className="h-11 w-full font-semibold bg-gradient-to-r from-sky-500 to-indigo-500 text-white hover:from-sky-400 hover:to-indigo-400 flex items-center gap-2"
-                  >
-                    <LuDownload className="h-4 w-4" />
-                    Download PDF Report
-                  </Button>
-                )}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md bg-slate-900 border-white/10 text-white">
+          <DialogHeader><DialogTitle className="text-xl font-bold font-sora">Interview Completed!</DialogTitle></DialogHeader>
+          <div className="p-4 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="p-3 rounded-full bg-emerald-500/20 text-emerald-400">
+                <SearchCheck className="w-10 h-10" />
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
-  </>
-);
+            <p className="text-slate-400 text-sm">Thank you for participating. Your performance has been analyzed and your report is ready for download.</p>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/")}
+                className="border-white/10 hover:bg-white/5"
+              >
+                Go Home
+              </Button>
+              <Button
+                disabled={generateLoading}
+                onClick={() => generatePDFReport(feedback, interviewInfo)}
+                className="bg-blue-600 hover:bg-blue-500 font-bold"
+              >
+                {generateLoading ? "Generating..." : "Download Report"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 };
 
 export default StartInterview;
-
-// <Timer /> {formatTime(seconds)}
-// onClick={stopCall}
-//  {interviewInfo?.userName}
-// onClick={() => setIsDialogOpen(false)}
-// {interviewInfo?.jobTitle}
