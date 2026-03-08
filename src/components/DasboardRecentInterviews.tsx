@@ -306,15 +306,16 @@ Thanks.`
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/0 via-transparent to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-blue-500/5 transition-all duration-300 pointer-events-none" />
 
                 <CardHeader className="flex flex-row items-start justify-start gap-3 pb-1 relative z-10">
-                  <div className={`p-3 rounded-xl shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 shrink-0 ${darkTheme
+                  <div className={`p-3 rounded-xl shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 shrink-0 relative ${darkTheme
                     ? "bg-gradient-to-br from-blue-900 to-blue-800 text-blue-400"
                     : "bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600"
                     }`}>
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5 relative z-10" />
+                    <div className="absolute inset-0 rounded-xl bg-blue-500/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
-                  <div className="flex flex-col gap-1 flex-1">
-                    <p className="text-xs uppercase tracking-[0.12em] text-slate-400 font-semibold">Role</p>
-                    <CardTitle className={`font-bold text-lg font-sora leading-tight group-hover:text-blue-600 transition-colors duration-300 ${darkTheme ? "text-white" : "text-slate-900"
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-black">AI Assessment ID</p>
+                    <CardTitle className={`font-black text-lg font-sora leading-tight truncate transition-colors duration-300 ${darkTheme ? "text-white" : "text-slate-900"
                       }`}>
                       {item.jobTitle}
                     </CardTitle>

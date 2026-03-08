@@ -34,14 +34,29 @@ const DashboardTopNav = () => {
     setMounted(true);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchValue.trim()) {
-      // Navigate to search or filter current page
-      console.log("Searching for:", searchValue);
-      // You can add actual search logic here
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  const handleSearch = async (val: string) => {
+    setSearchValue(val);
+    if (val.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("interview-details")
+        .select("id, userName, userEmail, interview_id")
+        .ilike("userName", `%${val}%`)
+        .limit(5);
+
+      if (error) throw error;
+      setSearchResults(data || []);
+    } catch (err) {
+      console.error("Search Error:", err);
     }
   };
+
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     toast.loading("Signing out...");
@@ -77,7 +92,7 @@ const DashboardTopNav = () => {
         )} />
 
         {/* Enhanced Search Bar */}
-        <form onSubmit={handleSearch} className={clsx(
+        <div className={clsx(
           "relative flex items-center rounded-2xl px-4 py-3 font-inter transition-all duration-300 min-[800px]:min-w-[320px] min-[1000px]:min-w-[420px]",
           isFocused
             ? darkTheme
@@ -95,16 +110,11 @@ const DashboardTopNav = () => {
           )} />
           <Input
             type="text"
-            placeholder="Search interviews, candidates..."
+            placeholder="Command + K to search candidates..."
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch(e);
-              }
-            }}
+            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             className={clsx(
               "flex-1 bg-transparent shadow-none border-none focus-visible:ring-0 h-auto p-0 placeholder:transition-colors font-medium text-[15px]",
               darkTheme
@@ -115,7 +125,7 @@ const DashboardTopNav = () => {
           {searchValue && (
             <button
               type="button"
-              onClick={() => setSearchValue("")}
+              onClick={() => { setSearchValue(""); setSearchResults([]); }}
               className={clsx(
                 "ml-2 p-1.5 rounded-lg transition-all duration-200 hover:scale-110",
                 darkTheme
@@ -126,7 +136,43 @@ const DashboardTopNav = () => {
               <LuX className="text-base" />
             </button>
           )}
-        </form>
+
+          {/* Search Results Dropdown */}
+          {isFocused && searchResults.length > 0 && (
+            <div className={clsx(
+              "absolute top-[calc(100%+12px)] left-0 right-0 rounded-2xl p-2 z-50 border transition-all animate-in fade-in slide-in-from-top-2 duration-300",
+              darkTheme
+                ? "bg-[#0c1024] border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+                : "bg-white border-blue-100 shadow-[0_20px_60px_rgba(37,99,235,0.15)]"
+            )}>
+              <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center justify-between">
+                <span>Matching Candidates</span>
+                <span className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full">{searchResults.length} Results</span>
+              </div>
+              <div className="space-y-1">
+                {searchResults.map((res) => (
+                  <div
+                    key={res.id}
+                    onClick={() => router.push(`/scheduled/${res.interview_id}/details`)}
+                    className={clsx(
+                      "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all active:scale-[0.98]",
+                      darkTheme ? "hover:bg-slate-800" : "hover:bg-blue-50"
+                    )}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold text-xs uppercase">
+                      {res.userName.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold truncate leading-none mb-1">{res.userName}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{res.userEmail}</p>
+                    </div>
+                    <LuChevronDown className="-rotate-90 text-slate-300 w-4 h-4" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-5">
           <button className={clsx(
@@ -174,14 +220,7 @@ const DashboardTopNav = () => {
                 >
                   HEY, {users?.[0].name}
                 </DropdownMenuLabel>
-                <p
-                  className={clsx(
-                    "text-[11px] font-semibold text-center mt-2 mb-1 tracking-wide uppercase",
-                    darkTheme ? "text-slate-300" : "text-slate-600"
-                  )}
-                >
-                  Developed by SYED MOHAMMAD AQUIB
-                </p>
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => router.push('/profile')}

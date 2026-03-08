@@ -29,6 +29,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
 import { supabase } from "@/services/supabaseClient";
@@ -70,6 +71,7 @@ const StartInterview = () => {
 
   // Coding Mode States
   const [isCodingMode, setIsCodingMode] = useState(false);
+  const [isTranscriptOpen, setIsTranscriptOpen] = useState(true);
   const [code, setCode] = useState<string>("// JavaScript Solution\nconsole.log(\"InterviewX IDE Initialized.\");\n\nfunction main() {\n    const message = \"The code is running successfully!\";\n    console.log(message);\n}\n\nmain();");
   const [codeLanguage, setCodeLanguage] = useState("javascript");
   const [codeOutput, setCodeOutput] = useState("");
@@ -244,11 +246,10 @@ const StartInterview = () => {
   }, [vapi]);
 
   const startCall = async () => {
-    let questionList = "";
-    interviewInfo?.interviewData?.forEach((item: { question: string }, index: number) => {
-      questionList += item.question + (index < interviewInfo.interviewData.length - 1 ? "," : "");
-    });
+    const questions = interviewInfo?.interviewData?.map((item: any) => item.question).filter(Boolean) || [];
+    const questionList = questions.join(", ");
     try {
+      setLoading(true);
       await vapi.start({
         model: {
           provider: "openai",
@@ -288,11 +289,14 @@ Keep your tone professional, encouraging, and highly technical during the coding
           ],
         },
         voice: { provider: "vapi", voiceId: "Hana" },
-        transcriber: { provider: "deepgram", model: "nova-2", language: "en-US" },
-        firstMessage: "Hi " + interviewInfo?.userName + ", how are you? Ready for your interview today?",
+        transcriber: { provider: "deepgram", model: "nova-2", language: "hi" },
+        firstMessage: "Hi " + (interviewInfo?.userName || "there") + ", how are you? Ready for your interview today?",
       });
+      return true;
     } catch (error) {
+      console.error("Vapi startCall Error:", error);
       setLoading(false);
+      return false;
     }
   };
 
@@ -310,9 +314,16 @@ Keep your tone professional, encouraging, and highly technical during the coding
         return;
       }
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      await startCall();
-      setHasStarted(true);
-    } catch (err) { }
+      const success = await startCall();
+      if (success) {
+        setHasStarted(true);
+      } else {
+        toast.error("Failed to initiate call. Please ensure your microphone is enabled.");
+      }
+    } catch (err) {
+      console.error("handleStart Error:", err);
+      toast.error("Microphone access denied or error starting interview.");
+    }
   };
 
   useEffect(() => {
@@ -334,13 +345,43 @@ Keep your tone professional, encouraging, and highly technical during the coding
     };
 
     const handleVapiError = (error: any) => {
-      console.error("Vapi Global Error:", error);
-      // Suppress technical meeting ejection messages as they are often redundant
-      const errorMsg = typeof error === 'string' ? error : JSON.stringify(error);
-      if (errorMsg.includes("Meeting has ended") || errorMsg.includes("ejection")) {
+      // 1. Detect and ignore truly empty error objects
+      const d: any = {};
+      try {
+        if (error && typeof error === 'object') {
+          Object.getOwnPropertyNames(error).forEach(k => d[k] = error[k]);
+          const p = Object.getPrototypeOf(error);
+          if (p) Object.getOwnPropertyNames(p).forEach(k => { if (!d[k]) d[k] = error[k]; });
+        }
+      } catch (e) { }
+
+      const isEmpty = !error || (typeof error === 'object' && Object.keys(d).length === 0);
+      if (isEmpty) return;
+
+      // 2. Extract message safely from various possible Vapi formats
+      const rawMsg = error?.message || d.message || d.errorMsg ||
+        (typeof d.error === 'object' ? (d.error.msg || d.error.message) : d.error) ||
+        (typeof error === 'string' ? error : "");
+      const msg = String(rawMsg).toLowerCase();
+
+      // 3. Suppress noise for normal transitions or terminations
+      const ignoreKeywords = ["meeting", "ended", "ejection", "disconnect", "close", "timeout", "finished", "canceled"];
+      if (ignoreKeywords.some(k => msg.includes(k))) {
+        console.log("Vapi Info (Suppressed noise):", msg);
         return;
       }
-      toast.error("Connection issue detected.");
+
+      // 4. Detailed logging only for genuine-looking errors
+      console.error("VAPI ERROR RAW:", error);
+      console.error("VAPI ERROR DETAILS:", JSON.stringify(d, null, 2));
+
+      // 5. User Feedback
+      if (msg === "[object object]" || msg === "") {
+        if (!isCallActive) return;
+        toast.error("Vapi disconnect. Please check connection.");
+      } else {
+        toast.error(`Vapi: ${rawMsg}`);
+      }
     };
 
     vapi.on("speech-start", handleSpeechStart);
@@ -356,7 +397,7 @@ Keep your tone professional, encouraging, and highly technical during the coding
       vapi.off("call-end", handleCallEnd);
       vapi.off("error", handleVapiError);
     };
-  }, [vapi, hasCallStartToast]);
+  }, [vapi, hasCallStartToast, isCallActive, isMicOn]);
 
   useEffect(() => {
     if (callFinished) {
@@ -454,6 +495,39 @@ Keep your tone professional, encouraging, and highly technical during the coding
     return () => clearInterval(interval);
   }, [isCallActive, isCodingMode, code]);
 
+  // Tab and Window Switch Detection
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isCallActive && !callFinished) {
+        handleSuspiciousActivity("tab_switch");
+      }
+    };
+
+    const handleWindowBlur = () => {
+      if (isCallActive && !callFinished) {
+        handleSuspiciousActivity("tab_switch");
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isCallActive && !callFinished) {
+        e.preventDefault();
+        e.returnValue = "Are you sure you want to leave? Your interview progress will be lost and may be marked as suspicious.";
+        return e.returnValue;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isCallActive, callFinished]);
+
   const stopCall = () => {
     toast.info("Wrapping up your interview...");
     stopCamera();
@@ -540,10 +614,21 @@ Keep your tone professional, encouraging, and highly technical during the coding
     if (category === "low_light") msg = "⚠️ Warning: Low lighting.";
     if (category === "bright_screen") msg = "⚠️ Warning: Device screen detected.";
     if (category === "movement") msg = "⚠️ Warning: Movement detected.";
+    if (category === "tab_switch") msg = "⚠️ Warning: Tab/Window switch detected. Please stay on this screen.";
 
     setWarningMessage(msg);
     setShowWarning(true);
-    setTimeout(() => setShowWarning(false), 5000);
+    setTimeout(() => {
+      setShowWarning(false);
+      // Reset tab switch warning after display so they can be warned again if they do it again
+      if (category === "tab_switch") {
+        setWarnedCategories(prev => {
+          const next = new Set(prev);
+          next.delete("tab_switch");
+          return next;
+        });
+      }
+    }, 5000);
 
     if (warningCount + 1 >= 3) {
       toast.error("Terminated due to multiple warnings.");
@@ -724,7 +809,11 @@ Please review this solution for correctness and optimization. Discuss it with th
           ...aiFeedback,
           metadata: {
             code_history: codeHistory,
-            final_code: code
+            final_code: code,
+            suspicious_activities: suspiciousActivities,
+            warning_count: warningCount,
+            duration: formatTime(seconds),
+            transcripts: messages,
           }
         },
         recomended: aiFeedback?.data?.feedback?.recommendation || "Maybe",
@@ -737,11 +826,13 @@ Please review this solution for correctness and optimization. Discuss it with th
         throw new Error(insertError.message || "Database insert failed");
       }
 
-      await generatePDFReport(aiFeedback, interviewInfo);
+      await generatePDFReport({ ...aiFeedback, metadata: insertData.feedback.metadata }, interviewInfo);
       toast.success("Interview report saved successfully!");
     } catch (err: any) {
-      console.error("Supabase Save Failed:", err);
-      toast.error("Failed to save report to dashboard: " + (err.message || "Unknown error"));
+      console.error("Supabase Save Failed - Object Detail:", err);
+      const detailedError = err?.message || JSON.stringify(err, Object.getOwnPropertyNames(err));
+      console.error("Supabase Save Error String:", detailedError);
+      toast.error("Cloud Sync Failed: " + (err.message || "Unknown error"));
     } finally {
       setGenerateLoading(false);
     }
@@ -764,6 +855,7 @@ Please review this solution for correctness and optimization. Discuss it with th
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Instructions</DialogTitle>
+            <DialogDescription>Please review the rules and instructions before starting your AI interview.</DialogDescription>
           </DialogHeader>
           <div className="flex justify-end pt-4">
             <Button onClick={() => { setHasAcknowledgedInstructions(true); setShowPreInterviewModal(false); }}>
@@ -780,17 +872,37 @@ Please review this solution for correctness and optimization. Discuss it with th
         </div>
 
         <div className="mx-auto flex max-w-7xl flex-col gap-2 flex-1 w-full min-h-0">
-          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-3 shrink-0">
-            <h1 className="text-xl font-bold font-sora tracking-tight">INTERVIEWX AI</h1>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm font-bold"><Timer className="h-4 w-4" /> {formatTime(seconds)}</div>
-              <Image src="/profile.png" alt="Profile" width={40} height={40} className="rounded-full border-2 border-white/20" />
+          <div className="flex items-center justify-between rounded-none border-b border-white/10 bg-[#0f172a] px-6 py-4 shrink-0 -mx-3 -mt-3 mb-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                <span className="bg-white text-blue-900 px-2 py-0.5 rounded-md text-sm">IX</span>
+                INTERVIEWX
+              </h1>
+              <span className="text-[15px] text-slate-300 border-l border-white/20 pl-4">
+                Interview Room
+              </span>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3 bg-[#1e293b] px-4 py-1.5 rounded-lg border border-white/5">
+                <div className={`w-2 h-2 rounded-full ${isCallActive ? 'bg-red-500 animate-pulse' : 'bg-slate-500'}`}></div>
+                <div className="text-sm font-bold tracking-widest text-[#e2e8f0]">
+                  {formatTime(seconds)}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right flex flex-col justify-center">
+                  <span className="text-sm font-medium leading-none text-white">{interviewInfo?.userName || "Advay Anand"}</span>
+                  <span className="text-[10px] text-slate-400 mt-1">{interviewInfo?.userEmail || "advay@example.com"}</span>
+                </div>
+                <Image src="/profile.png" alt="Profile" width={36} height={36} className="rounded-full bg-slate-800" />
+              </div>
             </div>
           </div>
 
-          <div className={`grid ${isCodingMode ? 'grid-cols-[1.8fr_1fr]' : 'grid-cols-[1.4fr_0.8fr]'} gap-3 flex-1 min-h-0 overflow-hidden`}>
+          <div className="flex gap-4 flex-1 min-h-0 overflow-hidden transition-all duration-300">
             {/* LEFT AREA: Video or Editor */}
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 p-3 flex flex-col min-h-0">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 p-4 flex flex-col min-h-0 flex-1 transition-all duration-300">
               {isCodingMode ? (
                 <CodeEditor
                   code={code}
@@ -803,12 +915,33 @@ Please review this solution for correctness and optimization. Discuss it with th
                   problem={activeProblem}
                 />
               ) : (
-                <div className="relative flex-1 rounded-xl overflow-hidden bg-black">
-                  <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />
+                <div className="flex flex-1 gap-6 min-h-0 items-center justify-center">
+                  {/* AI Video Area (Squared) */}
+                  <div className="aspect-square w-full max-w-[480px] h-auto rounded-[24px] bg-[#000000] relative flex flex-col items-center justify-center overflow-hidden border border-white/5 shadow-2xl">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#7C3AED] flex items-center justify-center text-5xl md:text-6xl font-medium text-white mb-6">
+                      I
+                    </div>
+                    {/* Visualizer */}
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-4 bg-white rounded-full"></div>
+                      <div className="w-1.5 h-6 bg-white rounded-full"></div>
+                      <div className="w-1.5 h-8 bg-white rounded-full"></div>
+                      <div className="w-1.5 h-6 bg-white rounded-full"></div>
+                      <div className="w-1.5 h-4 bg-white rounded-full"></div>
+                    </div>
+                    <span className="absolute bottom-5 left-6 text-sm md:text-base font-medium text-slate-300">Interviewer</span>
+                  </div>
+
+                  {/* User Video Area (Squared) */}
+                  <div className="aspect-square w-full max-w-[480px] h-auto rounded-[24px] bg-black overflow-hidden relative border-[3px] border-[#3B82F6] shadow-2xl">
+                    {/* scale-x-[-1] is typically used to mirror. User explicitly requested NO mirror image, so no scaleX applied. */}
+                    <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />
+                    <span className="absolute bottom-5 left-6 text-sm md:text-base font-medium text-white z-10 drop-shadow-md">{interviewInfo?.userName || "Advay Anand"}</span>
+                  </div>
                 </div>
               )}
 
-              <div className="mt-2 flex items-center justify-center gap-2">
+              <div className="mt-3 flex items-center justify-center gap-3">
                 <Button
                   onClick={handleStart}
                   disabled={hasAttempted || hasStarted}
@@ -820,30 +953,38 @@ Please review this solution for correctness and optimization. Discuss it with th
                 <Button
                   onClick={toggleCamera}
                   variant="outline"
-                  className={`gap-2 border-white/10 ${isCameraOn ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
+                  className={`gap-2 border-transparent hover:border-white/10 ${isCameraOn ? 'bg-white/5 text-white/70' : 'bg-red-500/10 text-red-500'}`}
                 >
                   {isCameraOn ? <LuVideo className="w-4 h-4" /> : <LuVideoOff className="w-4 h-4" />}
-                  {isCameraOn ? "Camera: ON" : "Camera: OFF"}
                 </Button>
 
                 <Button
                   onClick={toggleMic}
                   variant="outline"
-                  className={`gap-2 border-white/10 ${isMicOn ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
+                  className={`gap-2 border-transparent hover:border-white/10 ${isMicOn ? 'bg-white/5 text-white/70' : 'bg-red-500/10 text-red-500'}`}
                 >
                   {isMicOn ? <LuMic className="w-4 h-4" /> : <LuMicOff className="w-4 h-4" />}
-                  {isMicOn ? "Mic: ON" : "Mic: OFF"}
                 </Button>
 
-                <Button variant="destructive" onClick={stopCall} className="gap-2">
-                  <LuX className="w-4 h-4" /> Finish
+                <Button variant="destructive" onClick={stopCall} className="gap-2 bg-[#991b1b] hover:bg-red-800 px-6 rounded-xl">
+                  {/* Phone hang-up icon usually on End Interview */}
+                  <LuX className="w-4 h-4" /> End Interview
+                </Button>
+
+                <Button
+                  onClick={() => setIsTranscriptOpen(!isTranscriptOpen)}
+                  variant="outline"
+                  className={`gap-2 rounded-xl border-none ${isTranscriptOpen ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-[#1f2328] text-white/70 hover:bg-[#2d333b] hover:text-white'}`}
+                >
+                  <LuMessagesSquare className="w-4 h-4" />
+                  {isTranscriptOpen ? "Hide Transcript" : "CC Transcript"}
                 </Button>
 
                 <Separator orientation="vertical" className="h-6 bg-white/10 mx-2" />
 
                 <Button
                   onClick={toggleCodingMode}
-                  className={`gap-2 ${isCodingMode ? "bg-indigo-600 hover:bg-indigo-500" : "bg-slate-800 hover:bg-slate-700"}`}
+                  className={`gap-2 rounded-xl border-none ${isCodingMode ? "bg-indigo-600 hover:bg-indigo-500" : "bg-[#1f2328] text-white/70 hover:bg-[#2d333b] hover:text-white"}`}
                 >
                   {isCodingMode ? <LuVideo className="w-4 h-4" /> : <LuTerminal className="w-4 h-4" />}
                   {isCodingMode ? "Switch to Video View" : "Go to Coding View"}
@@ -852,7 +993,7 @@ Please review this solution for correctness and optimization. Discuss it with th
             </div>
 
             {/* RIGHT AREA: Transcription + PIP Video */}
-            <div className="flex flex-col gap-3 min-h-0">
+            <div className={`flex flex-col gap-3 min-h-0 transition-all duration-300 ease-in-out ${isTranscriptOpen ? (isCodingMode ? 'w-[40%] opacity-100' : 'w-[35%] opacity-100') : 'w-0 opacity-0 pointer-events-none'}`}>
               {isCodingMode && (
                 <div className="h-48 rounded-2xl border border-white/10 overflow-hidden relative bg-black shrink-0">
                   <video
@@ -866,9 +1007,11 @@ Please review this solution for correctness and optimization. Discuss it with th
                   </div>
                 </div>
               )}
-              <div className="flex-1 rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col min-h-0">
-                <div className="flex items-center gap-2 mb-4"><LuMessagesSquare className="w-4 h-4" /> <span className="text-xs font-bold uppercase tracking-widest">Transcription</span></div>
-                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+              <div className="flex-1 rounded-[16px] border border-white/5 bg-[#0f141f] p-0 flex flex-col min-h-0 overflow-hidden">
+                <div className="px-5 py-4 border-b border-white/5">
+                  <span className="text-[17px] text-slate-200">Interview Transcript</span>
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-4 p-5 custom-scrollbar bg-[#0f141f]">
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-2 opacity-50">
                       <LuGhost className="w-8 h-8" />
@@ -876,15 +1019,36 @@ Please review this solution for correctness and optimization. Discuss it with th
                     </div>
                   ) : (
                     messages.map((m, i) => (
-                      <div key={i} className={`flex ${m.type === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-                        <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs ${m.type === 'assistant' ? 'bg-white/10 text-slate-100' : 'bg-blue-600 text-white'}`}>
-                          {m.content}
+                      <div key={i} className={`flex w-full ${m.type === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+                        {m.type === 'assistant' && (
+                          <div className="w-6 h-6 rounded-full bg-purple-900/50 flex items-center justify-center mr-3 mt-1 shrink-0 border border-purple-500/30">
+                            <div className="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
+                          </div>
+                        )}
+                        <div className="flex flex-col max-w-[80%]">
+                          <div className={`rounded-xl px-4 py-3 text-[13px] leading-relaxed shadow-sm ${m.type === 'assistant' ? 'bg-[#151b29] text-slate-200 border border-white/5' : 'bg-[#1e293b] text-slate-200'}`}>
+                            {m.content}
+                          </div>
+                          {m.type === 'user' && (
+                            <div className="text-[10px] text-slate-500 text-right mt-1.5 opacity-80">
+                              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | You
+                            </div>
+                          )}
+                          {m.type === 'assistant' && (
+                            <div className="text-[10px] text-slate-500 mt-1.5 opacity-80">
+                              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
                   )}
                 </div>
-                <Button onClick={downloadTranscription} className="mt-4 w-full text-xs font-bold gap-2"><LuDownload className="w-3.5 h-3.5" /> Download</Button>
+                <div className="p-3 border-t border-white/5 bg-[#0b0f19]">
+                  <Button onClick={downloadTranscription} className="w-full text-xs font-medium gap-2 bg-[#1e293b] hover:bg-[#334155] border-none text-slate-300">
+                    <LuDownload className="w-3.5 h-3.5" /> Download Transcript
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -893,7 +1057,10 @@ Please review this solution for correctness and optimization. Discuss it with th
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md bg-slate-900 border-white/10 text-white">
-          <DialogHeader><DialogTitle className="text-xl font-bold font-sora">Interview Completed!</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold font-sora">Interview Completed!</DialogTitle>
+            <DialogDescription className="text-slate-400">Your interview session has ended. You can now download your performance report.</DialogDescription>
+          </DialogHeader>
           <div className="p-4 text-center space-y-4">
             <div className="flex justify-center">
               <div className="p-3 rounded-full bg-emerald-500/20 text-emerald-400">

@@ -51,6 +51,11 @@ const items = [
     icon: LuActivity,
   },
   {
+    title: "Candidate Pipeline",
+    url: "/pipeline",
+    icon: LuBoxes,
+  },
+  {
     title: "Resume-Job Match",
     url: "/skill-matching",
     icon: LuTarget,
@@ -74,8 +79,8 @@ export function AppSidebar() {
   const totalCredits = users?.[0].credits || 0;
   const progress = totalCredits > 0 ? ((remainingCredits || 0) / totalCredits) * 100 : 0;
   return (
-    <Sidebar>
-      <SidebarHeader className="py-5 px-4 relative">
+    <Sidebar className="z-50">
+      <SidebarHeader className={clsx("py-5 px-4 relative z-50", darkTheme ? "bg-slate-900" : "bg-white")}>
         {/* Decorative top bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600"></div>
 
@@ -200,7 +205,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="px-4 pb-3">
+      <SidebarFooter className={clsx("px-4 pb-3 z-50", darkTheme ? "bg-slate-900" : "bg-white")}>
         {/* Credits Card */}
         <Link href="/subscription" className="block mb-3">
           <div className={clsx(

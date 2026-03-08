@@ -1,13 +1,13 @@
 "use client";
 import React from "react";
-import { LuVideo, LuCircleFadingPlus, LuSearch, LuMailPlus } from "react-icons/lu";
-import { LuStar, LuBookText, LuMessageSquareMore } from "react-icons/lu";
+import { LuVideo, LuCircleFadingPlus, LuSearch, LuMailPlus, LuStar, LuBookText, LuMessageSquareMore } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/ThemeProvider";
 import { useUserData } from "@/context/UserDetailContext";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 const DashBoardOptions = () => {
   const { darkTheme } = useTheme();
@@ -31,112 +31,134 @@ const DashBoardOptions = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 min-[800px]:grid-cols-2 min-[1200px]:grid-cols-3 gap-6 w-full my-8 max-w-[1400px] mx-auto">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full group/container">
       {/* First Card - Create Interview */}
-      <div
-        className={`group ${darkTheme ? "bg-slate-900 text-white" : "bg-gradient-to-br from-white via-white to-blue-50/50 text-black"
-          } py-5 px-5 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-blue-100/30 relative overflow-hidden`}
+      <motion.div
+        whileHover={{ y: -8, scale: 1.01 }}
+        className={`group relative p-10 rounded-[40px] border transition-all duration-500 overflow-hidden ${darkTheme
+          ? "bg-slate-900/40 border-white/5 shadow-2xl hover:bg-slate-900/60"
+          : "bg-white border-blue-50 shadow-[0_20px_50px_rgba(37,99,235,0.08)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.12)]"
+          }`}
       >
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className={`absolute -top-12 -right-12 w-48 h-48 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000 ${darkTheme ? "bg-blue-600/10 group-hover:bg-blue-600/20" : "bg-blue-600/5 group-hover:bg-blue-600/10"}`}></div>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
-              <LuVideo className="text-2xl text-white" />
+        <div className="relative z-10 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-10">
+            <motion.div
+              whileHover={{ rotate: 12, scale: 1.1 }}
+              className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-xl shadow-blue-500/20 transition-all duration-500"
+            >
+              <LuVideo className="text-3xl text-white" />
+            </motion.div>
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[9px] uppercase font-black tracking-[0.2em]">
+              PRO DEPLOY <LuStar className="animate-pulse" />
             </div>
-            <span className="relative inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-inter text-white rounded-full bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 transition-all duration-300 hover:scale-105 border border-blue-400/50 group-hover:border-blue-300">
-              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 opacity-0 group-hover:opacity-20 blur transition-opacity duration-300"></span>
-              <span className="relative flex items-center gap-1.5">
-                Pro <LuStar className="text-white text-xs animate-pulse" />
-              </span>
-            </span>
           </div>
-          <h2 className={`font-bold text-xl font-inter mt-3 mb-2 ${darkTheme ? "text-white" : "text-slate-800"}`}>
-            Create New Interview
-          </h2>
-          <p className={`text-sm font-medium tracking-tight font-inter leading-relaxed ${darkTheme ? "text-slate-300" : "text-slate-600"}`}>
-            Create AI interviews for your candidates and get interview results, insights and more in minutes.
+
+          <h3 className={`text-2xl font-bold font-sora leading-tight mb-4 tracking-tight ${darkTheme ? "text-white" : "text-slate-900"}`}>
+            Create New <br />
+            Interview
+          </h3>
+
+          <p className={`text-sm font-medium leading-relaxed mb-10 flex-1 ${darkTheme ? "text-slate-400" : "text-slate-500"}`}>
+            Set up a tailored AI interview for any role. Define the skills you want to assess and get started in minutes.
           </p>
+
           <Button
             onClick={() => handleProClick("/dashboard/create-interview")}
             disabled={!hasCredits && !isAdmin}
-            className={`py-2.5 px-5 text-sm tracking-tight cursor-pointer font-inter font-semibold w-full mt-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 ${hasCredits || isAdmin
-              ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
-              : "bg-gradient-to-r from-slate-400 to-slate-500 text-white cursor-not-allowed opacity-60"
+            className={`h-14 w-full rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 ${hasCredits || isAdmin
+              ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20 hover:scale-[1.02]"
+              : "bg-slate-800 text-slate-500 cursor-not-allowed"
               }`}
           >
-            Create Interview <LuCircleFadingPlus className="text-lg" />
+            Deploy New Interview
           </Button>
         </div>
-      </div>
-      {/* Second Card - Check Resume */}
-      <div
-        className={`group ${darkTheme ? "bg-slate-900 text-white" : "bg-gradient-to-br from-white via-white to-purple-50/50 text-black"
-          } py-5 px-5 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-purple-100/30 relative overflow-hidden`}
-      >
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      </motion.div>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
-              <LuBookText className="text-2xl text-white" />
+      {/* Second Card - Analytics */}
+      <motion.div
+        whileHover={{ y: -8, scale: 1.01 }}
+        className={`group relative p-10 rounded-[40px] border transition-all duration-500 overflow-hidden ${darkTheme
+          ? "bg-slate-900/40 border-white/5 shadow-2xl hover:bg-slate-900/60"
+          : "bg-white border-purple-50 shadow-[0_20px_50px_rgba(147,51,234,0.08)] hover:shadow-[0_40px_80px_rgba(147,51,234,0.12)]"
+          }`}
+      >
+        <div className={`absolute -top-12 -right-12 w-48 h-48 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000 ${darkTheme ? "bg-purple-600/10 group-hover:bg-purple-600/20" : "bg-purple-600/5 group-hover:bg-purple-600/10"}`}></div>
+
+        <div className="relative z-10 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-10">
+            <motion.div
+              whileHover={{ rotate: -12, scale: 1.1 }}
+              className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-xl shadow-purple-500/20 transition-all duration-500"
+            >
+              <LuBookText className="text-3xl text-white" />
+            </motion.div>
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-500 text-[9px] uppercase font-black tracking-[0.2em]">
+              INSIGHTS HUB
             </div>
           </div>
-          <h2 className={`font-bold text-xl font-inter mt-3 mb-2 ${darkTheme ? "text-white" : "text-slate-800"}`}>
-            Check Submitted Resume
-          </h2>
-          <p className={`text-sm font-medium tracking-tight font-inter leading-relaxed ${darkTheme ? "text-slate-300" : "text-slate-600"}`}>
-            See all the resume submitted by candidates during interviews in one place.
+
+          <h3 className={`text-2xl font-bold font-sora leading-tight mb-4 tracking-tight ${darkTheme ? "text-white" : "text-slate-900"}`}>
+            Review <br />
+            Candidates
+          </h3>
+
+          <p className={`text-sm font-medium leading-relaxed mb-10 flex-1 ${darkTheme ? "text-slate-400" : "text-slate-500"}`}>
+            Review candidate performance, read transcripts, and see AI-generated summaries to help you make better hiring decisions.
           </p>
+
           <Button
             onClick={() => handleProClick("/scheduled")}
-            disabled={!hasCredits && !isAdmin}
-            className={`py-2.5 px-5 text-sm tracking-tight font-inter font-semibold w-full mt-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 ${hasCredits || isAdmin
-              ? "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
-              : "bg-gradient-to-r from-slate-400 to-slate-500 text-white cursor-not-allowed opacity-60"
-              }`}
+            className={`h-14 w-full rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl bg-purple-600 hover:bg-purple-500 text-white shadow-purple-600/20 hover:scale-[1.02] active:scale-95`}
           >
-            Check Resume <LuSearch className="text-lg" />
+            Open Review Hub
           </Button>
         </div>
-      </div>
-      {/* Third Card - Send Mails */}
-      <div
-        className={`group ${darkTheme ? "bg-slate-900 text-white" : "bg-gradient-to-br from-white via-white to-pink-50/50 text-black"
-          } py-5 px-5 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-pink-100/30 relative overflow-hidden`}
-      >
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      </motion.div>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
-              <LuMessageSquareMore className="text-2xl text-white" />
-            </div>
-            <span className="relative inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-inter text-white rounded-full bg-gradient-to-r from-pink-500 via-pink-600 to-rose-600 shadow-lg shadow-pink-500/50 hover:shadow-pink-500/70 transition-all duration-300 hover:scale-105 border border-pink-400/50 group-hover:border-pink-300">
-              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-400 via-rose-400 to-red-400 opacity-0 group-hover:opacity-20 blur transition-opacity duration-300"></span>
-              <span className="relative flex items-center gap-1.5">
-                Pro <LuStar className="text-white text-xs animate-pulse" />
-              </span>
-            </span>
-          </div>
-          <h2 className={`font-bold text-xl font-inter mt-3 mb-2 ${darkTheme ? "text-white" : "text-slate-800"}`}>
-            Send Mails to Candidates
-          </h2>
-          <p className={`text-sm font-medium tracking-tight font-inter leading-relaxed ${darkTheme ? "text-slate-300" : "text-slate-600"}`}>
-            Send custom emails to candidates and browse all your mails in one place.
-          </p>
-          <Link href="/dashboard/send-mail">
-            <Button
-              className="py-2.5 px-5 text-sm tracking-tight font-inter font-semibold w-full mt-5 bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
+      {/* Third Card - Communication */}
+      <motion.div
+        whileHover={{ y: -8, scale: 1.01 }}
+        className={`group relative p-10 rounded-[40px] border transition-all duration-500 overflow-hidden ${darkTheme
+          ? "bg-slate-900/40 border-white/5 shadow-2xl hover:bg-slate-900/60"
+          : "bg-white border-pink-50 shadow-[0_20px_50px_rgba(236,72,153,0.08)] hover:shadow-[0_40px_80px_rgba(236,72,153,0.12)]"
+          }`}
+      >
+        <div className={`absolute -top-12 -right-12 w-48 h-48 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000 ${darkTheme ? "bg-pink-600/10 group-hover:bg-pink-600/20" : "bg-pink-600/5 group-hover:bg-pink-600/10"}`}></div>
+
+        <div className="relative z-10 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-10">
+            <motion.div
+              whileHover={{ rotate: 12, scale: 1.1 }}
+              className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-pink-500 to-pink-700 flex items-center justify-center shadow-xl shadow-pink-500/20 transition-all duration-500"
             >
-              Send Mails <LuMailPlus className="text-lg" />
+              <LuMessageSquareMore className="text-3xl text-white" />
+            </motion.div>
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 text-[9px] uppercase font-black tracking-[0.25em]">
+              BETA <LuStar className="animate-pulse" />
+            </div>
+          </div>
+
+          <h3 className={`text-2xl font-bold font-sora leading-tight mb-4 tracking-tight ${darkTheme ? "text-white" : "text-slate-900"}`}>
+            Candidate <br />
+            Communication
+          </h3>
+
+          <p className={`text-sm font-medium leading-relaxed mb-10 flex-1 ${darkTheme ? "text-slate-400" : "text-slate-500"}`}>
+            Stay in touch with your candidates. Send follow-up emails and interview links directly from the platform.
+          </p>
+
+          <Link href="/dashboard/send-mail" className="w-full">
+            <Button
+              className={`h-14 w-full rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl bg-pink-600 hover:bg-pink-500 text-white shadow-pink-600/20 hover:scale-[1.02] active:scale-95`}
+            >
+              Launch Outreach
             </Button>
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

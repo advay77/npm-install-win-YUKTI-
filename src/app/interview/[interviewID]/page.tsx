@@ -52,6 +52,34 @@ const Interview = () => {
     }
     setUploading(true);
 
+    // Validate the resume first
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const validateRes = await fetch("/api/validate-resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      const validateData = await validateRes.json();
+
+      if (!validateRes.ok || !validateData.isValid) {
+        setUploading(false);
+        toast.error("Invalid Resume", {
+          description: validateData.reason || "The uploaded document does not appear to be a resume.",
+        });
+        return;
+      }
+    } catch (error) {
+      console.error("Validation Error:", error);
+      setUploading(false);
+      toast.error("Validation Error", {
+        description: "Failed to validate the resume document."
+      });
+      return;
+    }
+
     const now = new Date();
     const timestamp = `${now.getFullYear()}-${now.getMonth() + 1
       }-${now.getDate()}_${now.getHours()}-${now.getMinutes()}`;
@@ -205,6 +233,7 @@ const Interview = () => {
                 width={110}
                 height={110}
                 alt="workspace"
+                priority
                 className="mx-auto drop-shadow-sm"
               />
               <p className="text-xl font-semibold text-slate-900 capitalize">

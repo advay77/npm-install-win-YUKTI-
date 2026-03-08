@@ -35,6 +35,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -300,6 +301,9 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
                 <DialogContent className={`sm:max-w-md ${darkTheme ? "bg-slate-800 text-white" : ""}`}>
                   <DialogHeader>
                     <DialogTitle className={darkTheme ? "text-white" : ""}>Add Interview Question</DialogTitle>
+                    <DialogDescription className={darkTheme ? "text-slate-400" : ""}>
+                      Type your custom question below and select its category.
+                    </DialogDescription>
                   </DialogHeader>
 
                   <Input
