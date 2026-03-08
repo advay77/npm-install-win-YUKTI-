@@ -26,6 +26,22 @@ import {
 import { LuActivity, LuLoader, LuVideo, LuDock } from "react-icons/lu";
 import Image from "next/image";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import { useMemo } from "react";
 
 const icons = [Briefcase, Clock, FileText, UserCheck, Calendar];
 
@@ -35,6 +51,11 @@ const ScheduledInterview = () => {
   const [loading, setLoading] = useState(false);
   const [interviewList, setInterviewList] = useState<any>([]);
   const [usedFallback, setUsedFallback] = useState(false);
+
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [minScore, setMinScore] = useState(0);
+  const [recommendationFilter, setRecommendationFilter] = useState("all"); // all, Yes (Approved), No (Not Recommended)
 
   useEffect(() => {
     users && GetInterviewList();
@@ -127,6 +148,46 @@ const ScheduledInterview = () => {
     }
   };
 
+  const filteredData = useMemo(() => {
+    if (!interviewList) return [];
+
+    return interviewList.map((interview: any) => {
+      const candidates = interview["interview-details"] || [];
+
+      const filteredCandidates = candidates.filter((cand: any) => {
+        // Name/Email match
+        const matchesSearch =
+          cand.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          cand.userEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          interview.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        // Score match
+        const ratings = cand.feedback?.data?.feedback?.rating;
+        let avgScore = 0;
+        if (ratings) {
+          const values = Object.values(ratings) as number[];
+          avgScore = values.reduce((a, b) => a + b, 0) / values.length;
+        }
+        const matchesScore = avgScore >= minScore;
+
+        // Recommendation match
+        const recommendation = cand.feedback?.data?.feedback?.recommendation;
+        const matchesRec = recommendationFilter === "all" || recommendation === recommendationFilter;
+
+        return matchesSearch && matchesScore && matchesRec;
+      });
+
+      return {
+        ...interview,
+        filteredCandidates
+      };
+    }).filter((interview: any) => {
+      // Show interview if it matches search OR has filtered candidates
+      const matchesJobSearch = interview.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesJobSearch || interview.filteredCandidates.length > 0;
+    });
+  }, [interviewList, searchQuery, minScore, recommendationFilter]);
+
   if (loading) {
     return (
       <div className={`w-full h-full flex items-center justify-center ${darkTheme
@@ -162,10 +223,90 @@ const ScheduledInterview = () => {
             )}
           </div>
 
+          <div className="flex items-center gap-3">
+            <div className="relative group w-full md:w-80">
+              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${darkTheme ? "text-slate-500 group-hover:text-blue-400" : "text-slate-400 group-hover:text-blue-500"}`} />
+              <Input
+                placeholder="Search candidates or jobs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`pl-11 pr-4 py-2 rounded-2xl text-sm transition-all outline-none border ${darkTheme
+                  ? "bg-slate-900/50 border-slate-800 focus:border-blue-500/50 text-white"
+                  : "bg-white border-slate-200 focus:border-blue-500 shadow-sm"
+                  }`}
+              />
+            </div>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={`flex items-center gap-2 rounded-2xl border transition-all h-10 ${minScore > 0 || recommendationFilter !== "all"
+                    ? "border-blue-500 bg-blue-500/10 text-blue-500"
+                    : darkTheme ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+                    }`}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span className="text-sm font-semibold">Filters</span>
+                  {(minScore > 0 || recommendationFilter !== "all") && (
+                    <span className="ml-1 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className={`w-80 p-6 rounded-3xl border ${darkTheme ? "bg-slate-900 border-slate-800 shadow-2xl shadow-black/50" : "bg-white border-slate-200 shadow-xl"}`}>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h4 className={`font-bold text-base ${darkTheme ? "text-white" : "text-slate-900"}`}>Advanced Filters</h4>
+                    {(minScore > 0 || recommendationFilter !== "all") && (
+                      <button
+                        onClick={() => { setMinScore(0); setRecommendationFilter("all"); }}
+                        className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors"
+                      >
+                        Reset All
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className={`text-[11px] font-black uppercase tracking-wider ${darkTheme ? "text-slate-500" : "text-slate-400"}`}>
+                      Minimum Score: {minScore}/10
+                    </label>
+                    <div className="px-1">
+                      <input
+                        type="range"
+                        min="0"
+                        max="10"
+                        step="0.5"
+                        value={minScore}
+                        onChange={(e) => setMinScore(parseFloat(e.target.value))}
+                        className="w-full h-1.5 bg-blue-500/20 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className={`text-[11px] font-black uppercase tracking-wider ${darkTheme ? "text-slate-500" : "text-slate-400"}`}>
+                      Recommendation
+                    </label>
+                    <Select value={recommendationFilter} onValueChange={setRecommendationFilter}>
+                      <SelectTrigger className={`w-full rounded-xl ${darkTheme ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                        <SelectValue placeholder="All Recommendations" />
+                      </SelectTrigger>
+                      <SelectContent className={darkTheme ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="Yes">Approved Only</SelectItem>
+                        <SelectItem value="No">Not Recommended</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         <div className="w-full flex items-center justify-center">
-          {interviewList?.length == 0 && (
+          {interviewList?.length === 0 && (
             <div className=" flex flex-col justify-center items-center mt-32">
               <div className={`p-4 rounded-full ${darkTheme ? "bg-blue-600/20" : "bg-blue-100"} mb-4`}>
                 <LuVideo className={`text-5xl ${darkTheme ? "text-blue-400" : "text-blue-600"}`} />
@@ -178,14 +319,35 @@ const ScheduledInterview = () => {
               </p>
             </div>
           )}
+
+          {interviewList?.length > 0 && filteredData?.length === 0 && (
+            <div className=" flex flex-col justify-center items-center mt-32">
+              <div className={`p-4 rounded-full ${darkTheme ? "bg-slate-800" : "bg-slate-100"} mb-4`}>
+                <Search className={`text-5xl ${darkTheme ? "text-slate-500" : "text-slate-400"}`} />
+              </div>
+              <p className={`text-xl font-semibold tracking-tight font-inter ${darkTheme ? "text-slate-300" : "text-slate-700"}`}>
+                No candidates match your filters
+              </p>
+              <p className={`text-sm mt-2 ${darkTheme ? "text-slate-500" : "text-slate-600"}`}>
+                Try adjusting your search or advanced filters
+              </p>
+              <Button
+                variant="link"
+                onClick={() => { setSearchQuery(""); setMinScore(0); setRecommendationFilter("all"); }}
+                className="text-blue-500 font-bold mt-2"
+              >
+                Clear all filters
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Interview sections with candidates */}
-        {interviewList && interviewList.length > 0 && (
+        {filteredData && filteredData.length > 0 && (
           <div className="space-y-8 mt-10 max-w-[1400px] mx-auto">
-            {interviewList?.map((interview: any, index: number) => {
+            {filteredData?.map((interview: any, index: number) => {
               const Icon = icons[index % icons.length];
-              const candidates = interview["interview-details"] || [];
+              const candidates = interview.filteredCandidates || [];
 
               return (
                 <div
