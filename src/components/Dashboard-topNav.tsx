@@ -2,7 +2,7 @@
 import { useTheme } from "@/context/ThemeProvider";
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
-import { LuBell, LuSearch, LuChevronDown, LuX } from "react-icons/lu";
+import { LuSearch, LuChevronDown, LuX } from "react-icons/lu";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/SideBar";
 import { useUserData } from "@/context/UserDetailContext";
@@ -175,21 +175,7 @@ const DashboardTopNav = () => {
         </div>
 
         <div className="flex items-center gap-5">
-          <button className={clsx(
-            "relative p-2.5 rounded-xl transition-all duration-300 hover:scale-105",
-            darkTheme
-              ? "hover:bg-slate-800 text-slate-300 hover:text-white"
-              : "hover:bg-blue-50 text-slate-600 hover:text-blue-600"
-          )}>
-            <LuBell className="text-xl" />
-            <span className={clsx(
-              "absolute top-1.5 right-1.5 w-2 h-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse",
-              darkTheme ? "border-2 border-slate-900" : "border-2 border-white shadow-sm"
-            )}></span>
-          </button>
-          <p className="flex items-center gap-1 font-sora text-sm text-gray-400">
-            EN <LuChevronDown />
-          </p>
+
           {mounted && (
             <DropdownMenu>
               <DropdownMenuTrigger className="cursor-pointer focus:outline-none">

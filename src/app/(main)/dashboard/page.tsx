@@ -372,7 +372,7 @@ const Page = () => {
         </DialogContent>
       </Dialog>
 
-      <SheetDemo />
+
 
       <ScreenSizeBlocker />
 

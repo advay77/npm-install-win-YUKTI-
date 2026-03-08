@@ -55,11 +55,7 @@ const items = [
     url: "/pipeline",
     icon: LuBoxes,
   },
-  {
-    title: "Resume-Job Match",
-    url: "/skill-matching",
-    icon: LuTarget,
-  },
+
   {
     title: "Scheduled",
     url: "/scheduled",
