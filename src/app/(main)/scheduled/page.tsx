@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useMemo } from "react";
 
@@ -151,24 +151,34 @@ const ScheduledInterview = () => {
   const filteredData = useMemo(() => {
     if (!interviewList) return [];
 
+    const isAdvancedFilterActive = minScore > 0 || recommendationFilter !== "all";
+    const isSearchActive = searchQuery.trim() !== "";
+
     return interviewList.map((interview: any) => {
       const candidates = interview["interview-details"] || [];
 
       const filteredCandidates = candidates.filter((cand: any) => {
         // Name/Email match
-        const matchesSearch =
-          cand.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          cand.userEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          interview.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+        const searchLower = searchQuery.toLowerCase().trim();
+        const matchesSearch = !isSearchActive ||
+          cand.userName?.toLowerCase().includes(searchLower) ||
+          cand.userEmail?.toLowerCase().includes(searchLower) ||
+          interview.jobTitle?.toLowerCase().includes(searchLower);
 
         // Score match
         const ratings = cand.feedback?.data?.feedback?.rating;
-        let avgScore = 0;
+        let avgScore: number | null = null;
         if (ratings) {
           const values = Object.values(ratings) as number[];
-          avgScore = values.reduce((a, b) => a + b, 0) / values.length;
+          if (values.length > 0) {
+            const sum = values.reduce((a, b) => a + (Number(b) || 0), 0);
+            avgScore = sum / values.length;
+          }
         }
-        const matchesScore = avgScore >= minScore;
+
+        // If minScore is 0, we don't filter.
+        // If minScore > 0, we only show candidates who have a score AND meet the threshold.
+        const matchesScore = minScore === 0 || (avgScore !== null && avgScore >= minScore);
 
         // Recommendation match
         const recommendation = cand.feedback?.data?.feedback?.recommendation;
@@ -182,9 +192,14 @@ const ScheduledInterview = () => {
         filteredCandidates
       };
     }).filter((interview: any) => {
-      // Show interview if it matches search OR has filtered candidates
-      const matchesJobSearch = interview.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesJobSearch || interview.filteredCandidates.length > 0;
+      const hasMatchingCandidates = interview.filteredCandidates.length > 0;
+
+      // If any filter is active, only show interviews that HAVE matching candidates
+      if (isAdvancedFilterActive || isSearchActive) {
+        return hasMatchingCandidates;
+      }
+
+      return true; // No filters active, show everything.
     });
   }, [interviewList, searchQuery, minScore, recommendationFilter]);
 
@@ -293,7 +308,7 @@ const ScheduledInterview = () => {
                         <SelectValue placeholder="All Recommendations" />
                       </SelectTrigger>
                       <SelectContent className={darkTheme ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}>
-                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="all">All Status</SelectItem>
                         <SelectItem value="Yes">Approved Only</SelectItem>
                         <SelectItem value="No">Not Recommended</SelectItem>
                       </SelectContent>
